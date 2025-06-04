@@ -30,7 +30,7 @@ A modern, responsive client application for audio transcription using the Whispe
 ## Installation
 
 1. Clone this repository
-2. Open `index.html` in a web browser
+2. Load `index.html` in a web browser from a local server or HTTPS
 3. Configure the API URL and authentication token
 4. Start transcribing audio files
 
