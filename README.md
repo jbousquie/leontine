@@ -1,4 +1,4 @@
-# Whisper Transcription Client
+# Leontine
 
 A modern, responsive client application for audio transcription using the WhisperX API.
 
@@ -44,11 +44,11 @@ A modern, responsive client application for audio transcription using the Whispe
 
 ## Development
 
-This client is built with pure HTML, CSS, and JavaScript without external dependencies, making it easy to extend and maintain.
+Leontine is built with pure HTML, CSS, and JavaScript without external dependencies, making it easy to extend and maintain.
 
 ## WhisperX API
 
-This client is designed to work with the WhisperX API, which provides powerful audio transcription services with features like:
+Leontine is designed to work with the WhisperX API, which provides powerful audio transcription services with features like:
 
 - Multi-language support
 - Speaker diarization

@@ -2,10 +2,10 @@ Please read carefully the README.md file. Then read all the code within all the 
 
 ***************************************************************************************************************
 
-# Whisper Transcription Client
+# Leontine
 
 ## Project Description
-This project implements a modern web client for the WhisperX API transcription service. The client is built using only HTML, CSS, and JavaScript to ensure maximum compatibility and easy adaptation to various environments, including standalone web applications and Progressive Web Apps (PWAs) for both desktop and mobile devices.
+This project implements Leontine, a modern web client for the WhisperX API transcription service. The application is built using only HTML, CSS, and JavaScript to ensure maximum compatibility and easy adaptation to various environments, including standalone web applications and Progressive Web Apps (PWAs) for both desktop and mobile devices.
 
 ## Main Goals
 - Create a user-friendly interface for audio transcription services
@@ -112,7 +112,7 @@ Service worker for PWA functionality:
 - Managing cache updates
 
 ## WhisperX API Integration
-The client integrates with the WhisperX API, which provides:
+Leontine integrates with the WhisperX API, which provides:
 - Audio file transcription with multiple language support
 - Speaker diarization for multi-speaker audio
 - Various output formats (TXT, SRT, VTT, JSON, TSV)
