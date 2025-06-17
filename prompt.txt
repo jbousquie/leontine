@@ -1,7 +1,3 @@
-Please read carefully the README.md file. Then read all the code within all the rust files in the src directory and take a good attention to the inline comments. Finally, compose a very detailed prompt about what and how does this project with technical details so you could use this prompt to understand the current project status at once. Please edit the prompt.txt file and write this detailed prompt under the line with stars "********************"
-
-***************************************************************************************************************
-
 # Leontine
 
 ## Project Description

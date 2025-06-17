@@ -3,8 +3,8 @@
  */
 class WhisperAPI {
     constructor() {
-        this.baseUrl = '';
-        this.token = '';
+        this.baseUrl = "";
+        this.token = "";
         this.currentJobId = null;
         this.statusCheckInterval = null;
         this.retryCount = 0;
@@ -20,7 +20,7 @@ class WhisperAPI {
     setConfig(baseUrl, token) {
         this.baseUrl = baseUrl.trim();
         // Remove trailing slash if present
-        if (this.baseUrl.endsWith('/')) {
+        if (this.baseUrl.endsWith("/")) {
             this.baseUrl = this.baseUrl.slice(0, -1);
         }
         this.token = token;
@@ -33,7 +33,7 @@ class WhisperAPI {
      */
     getHeaders() {
         return {
-            'Authorization': `Bearer ${this.token}`
+            Authorization: `Bearer ${this.token}`,
         };
     }
 
@@ -46,32 +46,36 @@ class WhisperAPI {
     async transcribe(file, options = {}) {
         try {
             const formData = new FormData();
-            formData.append('file', file);
-            
-            // Add all options to the form data
-            if (options.language) formData.append('language', options.language);
-            if (options.model) formData.append('model', options.model);
-            if (options.diarize !== undefined) formData.append('diarize', options.diarize);
-            if (options.prompt) formData.append('prompt', options.prompt);
-            if (options.hfToken) formData.append('hf_token', options.hfToken);
-            if (options.outputFormat) formData.append('output_format', options.outputFormat);
+            formData.append("file", file);
 
-            const response = await fetch(`${this.baseUrl}/transcribe`, {
-                method: 'POST',
+            // Add all options to the form data
+            if (options.language) formData.append("language", options.language);
+            if (options.model) formData.append("model", options.model);
+            if (options.diarize !== undefined)
+                formData.append("diarize", options.diarize);
+            if (options.prompt) formData.append("prompt", options.prompt);
+            if (options.hfToken) formData.append("hf_token", options.hfToken);
+            if (options.outputFormat)
+                formData.append("response_format", options.outputFormat);
+
+            const response = await fetch(`${this.baseUrl}/transcription`, {
+                method: "POST",
                 headers: this.getHeaders(),
-                body: formData
+                body: formData,
             });
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => null);
-                throw new Error(errorData?.error || `HTTP error ${response.status}`);
+                throw new Error(
+                    errorData?.error || `HTTP error ${response.status}`,
+                );
             }
 
             const data = await response.json();
             this.currentJobId = data.job_id;
             return data;
         } catch (error) {
-            console.error('Transcription request failed:', error);
+            console.error("Transcription request failed:", error);
             throw error;
         }
     }
@@ -83,14 +87,17 @@ class WhisperAPI {
      */
     async checkStatus(jobId) {
         try {
-            const response = await fetch(`${this.baseUrl}/transcription/${jobId}`, {
-                method: 'GET',
-                headers: this.getHeaders()
-            });
+            const response = await fetch(
+                `${this.baseUrl}/transcription/${jobId}`,
+                {
+                    method: "GET",
+                    headers: this.getHeaders(),
+                },
+            );
 
             if (!response.ok) {
                 if (response.status === 404) {
-                    throw new Error('Job not found');
+                    throw new Error("Job not found");
                 }
                 throw new Error(`HTTP error ${response.status}`);
             }
@@ -98,25 +105,33 @@ class WhisperAPI {
             return await response.json();
         } catch (error) {
             // Implement retry mechanism for network errors
-            if (this.retryCount < this.maxRetries && 
-                (error instanceof TypeError || error.message.includes('network'))) {
+            if (
+                this.retryCount < this.maxRetries &&
+                (error instanceof TypeError ||
+                    error.message.includes("network"))
+            ) {
                 this.retryCount++;
-                console.warn(`Network error, retrying (${this.retryCount}/${this.maxRetries})...`);
-                
-                return new Promise(resolve => {
+                console.warn(
+                    `Network error, retrying (${this.retryCount}/${this.maxRetries})...`,
+                );
+
+                return new Promise((resolve) => {
                     setTimeout(async () => {
                         try {
                             const result = await this.checkStatus(jobId);
                             this.retryCount = 0; // Reset on success
                             resolve(result);
                         } catch (retryError) {
-                            resolve({ status: 'Error', error: retryError.message });
+                            resolve({
+                                status: "Error",
+                                error: retryError.message,
+                            });
                         }
                     }, this.retryDelay);
                 });
             }
-            
-            console.error('Status check failed:', error);
+
+            console.error("Status check failed:", error);
             throw error;
         }
     }
@@ -128,10 +143,13 @@ class WhisperAPI {
      */
     async getResult(jobId) {
         try {
-            const response = await fetch(`${this.baseUrl}/transcription/${jobId}/result`, {
-                method: 'GET',
-                headers: this.getHeaders()
-            });
+            const response = await fetch(
+                `${this.baseUrl}/transcription/${jobId}/result`,
+                {
+                    method: "GET",
+                    headers: this.getHeaders(),
+                },
+            );
 
             if (!response.ok) {
                 throw new Error(`HTTP error ${response.status}`);
@@ -139,7 +157,7 @@ class WhisperAPI {
 
             return await response.json();
         } catch (error) {
-            console.error('Get result failed:', error);
+            console.error("Get result failed:", error);
             throw error;
         }
     }
@@ -151,10 +169,13 @@ class WhisperAPI {
      */
     async cancelJob(jobId) {
         try {
-            const response = await fetch(`${this.baseUrl}/transcription/${jobId}`, {
-                method: 'DELETE',
-                headers: this.getHeaders()
-            });
+            const response = await fetch(
+                `${this.baseUrl}/transcription/${jobId}`,
+                {
+                    method: "DELETE",
+                    headers: this.getHeaders(),
+                },
+            );
 
             if (!response.ok) {
                 throw new Error(`HTTP error ${response.status}`);
@@ -164,7 +185,7 @@ class WhisperAPI {
             this.currentJobId = null;
             return await response.json();
         } catch (error) {
-            console.error('Cancel job failed:', error);
+            console.error("Cancel job failed:", error);
             throw error;
         }
     }
@@ -183,11 +204,14 @@ class WhisperAPI {
                 statusCallback(status);
 
                 // If job is complete or failed, stop checking
-                if (status.status === 'Completed' || status.status === 'Failed') {
+                if (
+                    status.status === "Completed" ||
+                    status.status === "Failed"
+                ) {
                     this.stopStatusCheck();
                 }
             } catch (error) {
-                statusCallback({ status: 'Error', error: error.message });
+                statusCallback({ status: "Error", error: error.message });
                 this.stopStatusCheck();
             }
         }, interval);
