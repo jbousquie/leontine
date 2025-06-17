@@ -1,6 +1,11 @@
 /**
  * API Module - Handles all API interactions with the Whisper API
  */
+// Constants
+const STATUS_CHECK_INTERVAL = 25000; // 25 seconds
+const RETRY_DELAY = 2000; // 2 seconds
+const MAX_RETRIES = 3; // Maximum number of retry attempts
+
 class WhisperAPI {
     constructor() {
         this.baseUrl = "";
@@ -8,8 +13,8 @@ class WhisperAPI {
         this.currentJobId = null;
         this.statusCheckInterval = null;
         this.retryCount = 0;
-        this.maxRetries = 3;
-        this.retryDelay = 2000; // 2 seconds
+        this.maxRetries = MAX_RETRIES;
+        this.retryDelay = RETRY_DELAY;
     }
 
     /**
@@ -106,13 +111,13 @@ class WhisperAPI {
         } catch (error) {
             // Implement retry mechanism for network errors
             if (
-                this.retryCount < this.maxRetries &&
+                this.retryCount < MAX_RETRIES &&
                 (error instanceof TypeError ||
                     error.message.includes("network"))
             ) {
                 this.retryCount++;
                 console.warn(
-                    `Network error, retrying (${this.retryCount}/${this.maxRetries})...`,
+                    `Network error, retrying (${this.retryCount}/${MAX_RETRIES})...`,
                 );
 
                 return new Promise((resolve) => {
@@ -127,7 +132,7 @@ class WhisperAPI {
                                 error: retryError.message,
                             });
                         }
-                    }, this.retryDelay);
+                    }, RETRY_DELAY);
                 });
             }
 
@@ -194,9 +199,9 @@ class WhisperAPI {
      * Start polling for job status
      * @param {string} jobId - The job ID to check
      * @param {function} statusCallback - Callback for status updates
-     * @param {number} interval - Check interval in ms
+     * @param {number} interval - Check interval in ms (defaults to STATUS_CHECK_INTERVAL)
      */
-    startStatusCheck(jobId, statusCallback, interval = 2000) {
+    startStatusCheck(jobId, statusCallback, interval = STATUS_CHECK_INTERVAL) {
         this.stopStatusCheck(); // Clear any existing interval
         this.statusCheckInterval = setInterval(async () => {
             try {
