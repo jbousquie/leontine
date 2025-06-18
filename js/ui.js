@@ -12,6 +12,7 @@ const UI = (function () {
     let state = {
         fileSelected: false,
         currentFileName: null,
+        apiStatus: "unknown", // 'unknown', 'checking', 'available', 'unavailable'
     };
 
     // Reference to external modules
@@ -58,6 +59,10 @@ const UI = (function () {
             // Transcription elements
             transcribeButton: document.getElementById("transcribe-button"),
             messageDisplay: document.getElementById("message-display"),
+
+            // API status elements
+            apiStatusIndicator: document.getElementById("api-status-indicator"),
+            apiStatusMessage: document.getElementById("api-status-message"),
         };
     }
 
@@ -129,6 +134,11 @@ const UI = (function () {
                 elements.apiUrlValidation.style.color = "#d32f2f"; // Reset to default error color
                 elements.apiUrlValidation.textContent = "";
             }, 3000);
+
+            // Check API availability with new URL
+            if (api && api.checkApiAvailability) {
+                api.checkApiAvailability(url);
+            }
         } catch (e) {
             elements.apiUrlValidation.textContent =
                 "Error saving API URL. Please try again.";
@@ -236,12 +246,52 @@ const UI = (function () {
         return elements.apiUrlInput.value.trim();
     }
 
+    /**
+     * Updates the API status indicator and message
+     * @param {string} status - The status ('checking', 'available', 'unavailable')
+     * @param {string} [errorMessage] - Optional error message for unavailable status
+     */
+    function updateApiStatus(status, errorMessage) {
+        // Update state
+        state.apiStatus = status;
+
+        // Clear existing classes
+        elements.apiStatusIndicator.classList.remove(
+            "available",
+            "unavailable",
+        );
+
+        // Update indicator and message based on status
+        switch (status) {
+            case "checking":
+                elements.apiStatusMessage.textContent =
+                    "Checking API availability...";
+                break;
+
+            case "available":
+                elements.apiStatusIndicator.classList.add("available");
+                elements.apiStatusMessage.textContent = "API is accessible";
+                break;
+
+            case "unavailable":
+                elements.apiStatusIndicator.classList.add("unavailable");
+                elements.apiStatusMessage.textContent = errorMessage
+                    ? `Server not accessible: ${errorMessage}`
+                    : "Server not accessible";
+                break;
+
+            default:
+                elements.apiStatusMessage.textContent = "";
+        }
+    }
+
     // Public methods
     return {
         init: init,
         updateMessage: updateMessage,
         getSelectedFile: getSelectedFile,
         getApiUrl: getApiUrl,
+        updateApiStatus: updateApiStatus,
     };
 })();
 

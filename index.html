@@ -28,16 +28,26 @@
 
                     <div class="settings-item">
                         <label for="api-url">WhisperX API URL</label>
-                        <input
-                            type="url"
-                            id="api-url"
-                            name="api-url"
-                            placeholder="https://your-whisperx-api-url.com"
-                            required
-                        />
+                        <div class="api-url-container">
+                            <input
+                                type="url"
+                                id="api-url"
+                                name="api-url"
+                                placeholder="https://your-whisperx-api-url.com"
+                                required
+                            />
+                            <span
+                                class="api-status-indicator"
+                                id="api-status-indicator"
+                            ></span>
+                        </div>
                         <div
                             class="validation-message"
                             id="api-url-validation"
+                        ></div>
+                        <div
+                            class="api-status-message"
+                            id="api-status-message"
                         ></div>
                     </div>
 

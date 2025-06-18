@@ -98,6 +98,14 @@ button:disabled {
     font-weight: 500;
 }
 
+.api-url-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
 .settings-item input {
     width: 100%;
     max-width: 400px;
@@ -114,6 +122,30 @@ button:disabled {
     font-size: 14px;
     margin-top: 5px;
     min-height: 20px;
+}
+
+.api-status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-left: 10px;
+    background-color: #ccc;
+    flex-shrink: 0;
+}
+
+.api-status-indicator.available {
+    background-color: #4caf50; /* Green */
+}
+
+.api-status-indicator.unavailable {
+    background-color: #d32f2f; /* Red */
+}
+
+.api-status-message {
+    font-size: 14px;
+    margin-top: 5px;
+    min-height: 20px;
+    color: #555;
 }
 
 #save-api-url {

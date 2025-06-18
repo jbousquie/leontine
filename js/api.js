@@ -5,11 +5,27 @@
 
 // API Controller module
 const API = (function () {
+    // API endpoints
+    const API_ENDPOINTS = {
+        TEST: "/transcription/00", // Endpoint for API availability test
+        SUBMIT: "/transcription", // Endpoint to submit a new transcription job
+        STATUS: "/transcription/{job_id}", // Endpoint to check status (replace {job_id})
+        RESULT: "/transcription/{job_id}", // Endpoint to get results (replace {job_id})
+        CANCEL: "/transcription/{job_id}", // Endpoint to cancel job (replace {job_id})
+    };
+
     // Current transcription job state
     let currentJob = {
         jobId: null,
         file: null,
         status: null, // 'idle', 'sending', 'processing', 'completed', 'error'
+    };
+
+    // API status
+    let apiStatus = {
+        available: false,
+        lastChecked: null,
+        errorMessage: null,
     };
 
     // Reference to external modules
@@ -22,6 +38,12 @@ const API = (function () {
     function init(uiModule) {
         // Store reference to UI module
         ui = uiModule;
+
+        // Check API availability if URL is stored
+        const apiUrl = ui.getApiUrl();
+        if (apiUrl) {
+            checkApiAvailability(apiUrl);
+        }
     }
 
     /**
@@ -148,11 +170,62 @@ const API = (function () {
         return true;
     }
 
+    /**
+     * Checks if the API is available by making a test request
+     * @param {string} url - The API URL to check
+     */
+    function checkApiAvailability(url) {
+        // Update UI to show checking status
+        updateApiStatusUI("checking");
+
+        // Make a request to a non-existent job to test the API
+        // The API should return a 404, but that still means it's accessible
+        fetch(`${url}${API_ENDPOINTS.TEST}`, {
+            method: "GET",
+            headers: {
+                Accept: "application/json",
+            },
+        })
+            .then((response) => {
+                // If we get any response (even 404), the API is available
+                apiStatus.available = true;
+                apiStatus.lastChecked = new Date();
+                apiStatus.errorMessage = null;
+
+                // Update UI to show available status
+                updateApiStatusUI("available");
+                return true;
+            })
+            .catch((error) => {
+                // If we get a network error, the API is not available
+                apiStatus.available = false;
+                apiStatus.lastChecked = new Date();
+                apiStatus.errorMessage = error.message;
+
+                // Update UI to show unavailable status
+                updateApiStatusUI("unavailable", error.message);
+                return false;
+            });
+    }
+
+    /**
+     * Updates the UI to reflect the current API status
+     * @param {string} status - The status to display ('checking', 'available', 'unavailable')
+     * @param {string} [errorMessage] - Optional error message for unavailable status
+     */
+    function updateApiStatusUI(status, errorMessage) {
+        // Call UI update method if available
+        if (ui && ui.updateApiStatus) {
+            ui.updateApiStatus(status, errorMessage);
+        }
+    }
+
     // Public methods
     return {
         init: init,
         handleTranscription: handleTranscription,
         cancelTranscription: cancelTranscription,
+        checkApiAvailability: checkApiAvailability,
     };
 })();
 
