@@ -139,9 +139,14 @@ const UI = (function () {
                 elements.apiUrlValidation.textContent = "";
             }, 3000);
 
-            // Check API availability with new URL
-            if (api && api.checkApiAvailability) {
-                api.checkApiAvailability(url);
+            // Check API availability with new URL and start periodic checking
+            if (api) {
+                if (api.checkApiAvailability) {
+                    api.checkApiAvailability(url);
+                }
+                if (api.startPeriodicApiCheck) {
+                    api.startPeriodicApiCheck(url);
+                }
             }
         } catch (e) {
             elements.apiUrlValidation.textContent =
@@ -157,6 +162,8 @@ const UI = (function () {
 
         if (savedUrl) {
             elements.apiUrlInput.value = savedUrl;
+
+            // No need to check availability here as it's handled in API.init()
         }
     }
 
@@ -280,11 +287,13 @@ const UI = (function () {
         elements.apiStatusIndicator.classList.remove(
             "available",
             "unavailable",
+            "checking",
         );
 
         // Update indicator and message based on status
         switch (status) {
             case "checking":
+                elements.apiStatusIndicator.classList.add("checking");
                 elements.apiStatusMessage.textContent =
                     "Checking API availability...";
                 break;
@@ -292,6 +301,10 @@ const UI = (function () {
             case "available":
                 elements.apiStatusIndicator.classList.add("available");
                 elements.apiStatusMessage.textContent = "API is accessible";
+                elements.apiStatusMessage.setAttribute(
+                    "title",
+                    `Last checked: ${new Date().toLocaleTimeString()}`,
+                );
                 break;
 
             case "unavailable":
@@ -299,6 +312,10 @@ const UI = (function () {
                 elements.apiStatusMessage.textContent = errorMessage
                     ? `Server not accessible: ${errorMessage}`
                     : "Server not accessible";
+                elements.apiStatusMessage.setAttribute(
+                    "title",
+                    `Last checked: ${new Date().toLocaleTimeString()}`,
+                );
                 break;
 
             default:

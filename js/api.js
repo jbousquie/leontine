@@ -8,6 +8,7 @@ const API = (function () {
     // Configuration
     const CONFIG = {
         STATUS_CHECK_INTERVAL: 20000, // Interval to check status (20 seconds in milliseconds)
+        API_CHECK_INTERVAL: 30000, // Interval to check API availability (30 seconds in milliseconds)
     };
 
     // API endpoints
@@ -33,6 +34,7 @@ const API = (function () {
         available: false,
         lastChecked: null,
         errorMessage: null,
+        checkInterval: null, // Interval ID for periodic API checking
     };
 
     // Reference to external modules
@@ -49,7 +51,11 @@ const API = (function () {
         // Check API availability if URL is stored
         const apiUrl = ui.getApiUrl();
         if (apiUrl) {
+            // Initial check
             checkApiAvailability(apiUrl);
+
+            // Start periodic checking
+            startPeriodicApiCheck(apiUrl);
         }
     }
 
@@ -453,14 +459,17 @@ const API = (function () {
     /**
      * Checks if the API is available by making a test request
      * @param {string} url - The API URL to check
+     * @returns {Promise<boolean>} - Promise resolving to API availability
      */
     function checkApiAvailability(url) {
+        if (!url) return Promise.resolve(false);
+
         // Update UI to show checking status
         updateApiStatusUI("checking");
 
         // Make a request to a non-existent job to test the API
         // The API should return a 404, but that still means it's accessible
-        fetch(`${url}${API_ENDPOINTS.TEST}`, {
+        return fetch(`${url}${API_ENDPOINTS.TEST}`, {
             method: "GET",
             headers: {
                 Accept: "application/json",
@@ -566,6 +575,33 @@ const API = (function () {
         return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}.${milliseconds.toString().padStart(3, "0")}`;
     }
 
+    /**
+     * Starts periodic checking of API availability
+     * @param {string} url - The API URL to check
+     */
+    function startPeriodicApiCheck(url) {
+        // Clear any existing interval
+        stopPeriodicApiCheck();
+
+        // Set up new interval for API checking
+        apiStatus.checkInterval = setInterval(() => {
+            console.log(
+                `Checking API availability at ${new Date().toLocaleTimeString()}`,
+            );
+            checkApiAvailability(url);
+        }, CONFIG.API_CHECK_INTERVAL);
+    }
+
+    /**
+     * Stops periodic checking of API availability
+     */
+    function stopPeriodicApiCheck() {
+        if (apiStatus.checkInterval) {
+            clearInterval(apiStatus.checkInterval);
+            apiStatus.checkInterval = null;
+        }
+    }
+
     // Public methods
     return {
         init: init,
@@ -573,6 +609,8 @@ const API = (function () {
         cancelTranscription: cancelTranscription,
         checkApiAvailability: checkApiAvailability,
         getTranscriptionResults: getTranscriptionResults,
+        startPeriodicApiCheck: startPeriodicApiCheck,
+        stopPeriodicApiCheck: stopPeriodicApiCheck,
     };
 })();
 
