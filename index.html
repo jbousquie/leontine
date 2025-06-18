@@ -89,7 +89,10 @@
             </footer>
         </div>
 
-        <script src="app.js"></script>
+        <!-- Load scripts in correct order -->
+        <script src="js/ui.js"></script>
+        <script src="js/api.js"></script>
+        <script src="js/main.js"></script>
         <script>
             // Register service worker for PWA
             if ("serviceWorker" in navigator) {
