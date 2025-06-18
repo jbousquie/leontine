@@ -74,77 +74,76 @@ const API = (function () {
             status: "sending",
         };
 
-        // In a real implementation, this would call the API
-        // For now, we'll just simulate the API call with a timeout
-        simulateApiRequest(apiUrl, file);
+        // Send file to the API
+        sendTranscriptionRequest(apiUrl, file);
     }
 
     /**
-     * Simulates an API request (to be replaced with actual API calls)
+     * Sends a transcription request to the API
      * @param {string} apiUrl - The API URL to send the request to
      * @param {File} file - The audio file to be transcribed
      */
-    function simulateApiRequest(apiUrl, file) {
-        // Update message to show we're "sending"
-        ui.updateMessage(
-            `Sending ${file.name} to ${apiUrl}...\nThis is a simulation, no actual API call is made yet.`,
-        );
+    function sendTranscriptionRequest(apiUrl, file) {
+        // Update message to show we're sending
+        ui.updateMessage(`Sending ${file.name} to API...\nPlease wait...`);
 
-        // Simulate network delay
-        setTimeout(() => {
-            // Generate a fake job ID
-            const jobId = "job_" + Math.random().toString(36).substring(2, 10);
+        // Create FormData to send the file
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("sync", "false"); // Request async mode
 
-            // Update current job
-            currentJob.jobId = jobId;
-            currentJob.status = "processing";
+        // Send the POST request to the API
+        fetch(`${apiUrl}${API_ENDPOINTS.SUBMIT}`, {
+            method: "POST",
+            body: formData,
+        })
+            .then((response) => {
+                if (!response.ok) {
+                    // If response is not ok, parse error message if available
+                    return response
+                        .json()
+                        .then((errorData) => {
+                            throw new Error(
+                                errorData.error ||
+                                    `Server error: ${response.status}`,
+                            );
+                        })
+                        .catch((err) => {
+                            // If can't parse JSON, use status text
+                            throw new Error(
+                                `Server error: ${response.status} ${response.statusText}`,
+                            );
+                        });
+                }
+                return response.json();
+            })
+            .then((data) => {
+                // Handle successful response
+                // Expected format: { job_id: "...", status_url: "..." }
+                if (data.job_id) {
+                    // Update current job info
+                    currentJob.jobId = data.job_id;
+                    currentJob.status = "queued";
 
-            // Update UI
-            ui.updateMessage(
-                `File submitted successfully!\nJob ID: ${jobId}\nWaiting for processing to complete...`,
-            );
-
-            // Simulate checking status
-            simulateStatusCheck(jobId);
-        }, 1500);
-    }
-
-    /**
-     * Simulates periodic status checks of a transcription job
-     * @param {string} jobId - The simulated job ID
-     */
-    function simulateStatusCheck(jobId) {
-        // Initial queue position
-        let queuePosition = 2;
-
-        // Status check interval
-        const statusInterval = setInterval(() => {
-            // Simulate progress
-            if (queuePosition > 0) {
-                queuePosition--;
-                ui.updateMessage(
-                    `Job ID: ${jobId}\nStatus: In queue\nPosition: ${queuePosition}`,
-                );
-            } else {
-                // "Processing" phase after queue
-                clearInterval(statusInterval);
-                ui.updateMessage(
-                    `Job ID: ${jobId}\nStatus: Processing\nEstimated time remaining: calculating...`,
-                );
-
-                // Simulate completion after some time
-                setTimeout(() => {
-                    currentJob.status = "completed";
+                    // Update UI with success message
                     ui.updateMessage(
-                        `Job ID: ${jobId}\nStatus: Completed\n\nTranscription (simulated result):\n` +
-                            `"This is where the actual transcription text would appear. ` +
-                            `The WhisperX API would return the transcribed content of your audio file, ` +
-                            `potentially with timestamps and speaker identification if enabled."`,
+                        `File submitted successfully!\n` +
+                            `Job ID: ${data.job_id}\n` +
+                            `Status: Queued for processing\n\n` +
+                            `Check the status URL for updates: ${data.status_url}`,
                     );
-                }, 3000);
-            }
-        }, 1500);
+                } else {
+                    throw new Error("Invalid response: Missing job_id");
+                }
+            })
+            .catch((error) => {
+                // Handle errors
+                currentJob.status = "error";
+                ui.updateMessage(`Error submitting file: ${error.message}`);
+            });
     }
+
+    // Note: Status checking will be implemented in a future step
 
     /**
      * Cancels the current transcription job
