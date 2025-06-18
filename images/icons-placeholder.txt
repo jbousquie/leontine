@@ -1,0 +1,16 @@
+This is a placeholder file for PWA icons.
+
+For a production environment, you need to create the following icon files:
+1. icon-192.png - 192x192 pixels
+2. icon-512.png - 512x512 pixels
+
+These icons should be placed in this directory and will be used by the PWA manifest
+for installation on devices.
+
+You can generate these icons using online tools like:
+- https://app-manifest.firebaseapp.com/
+- https://www.pwabuilder.com/
+- https://realfavicongenerator.net/
+
+For best results, create a simple, recognizable logo for Leontine that works well
+at different sizes and on different background colors.

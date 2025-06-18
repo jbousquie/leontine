@@ -1,0 +1,233 @@
+:root {
+    font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    font-weight: 400;
+
+    color-scheme: light;
+    color: #0d2942;
+    background-color: #fffcf5;
+
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+    font-weight: 500;
+    color: #4a5fad;
+    text-decoration: inherit;
+}
+
+a:hover {
+    color: #363f77;
+}
+
+body {
+    margin: 0;
+    display: flex;
+    place-items: normal center;
+    min-width: 320px;
+    min-height: 100vh;
+}
+
+/* Logo styling */
+.logo-container {
+    margin: 20px auto;
+    text-align: center;
+}
+
+#app {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 2rem;
+    text-align: center;
+}
+
+.card {
+    padding: 2em;
+    background-color: #f5f2e9;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+}
+
+button {
+    border-radius: 8px;
+    border: 1px solid transparent;
+    padding: 0.6em 1.2em;
+    font-size: 1em;
+    font-weight: 500;
+    font-family: inherit;
+    background-color: #e5e0d8;
+    cursor: pointer;
+    transition:
+        border-color 0.25s,
+        background-color 0.25s;
+    color: #0d2942;
+}
+
+button:hover {
+    border-color: #363f77;
+    background-color: #f0ece5;
+}
+
+button:focus,
+button:focus-visible {
+    outline: 4px auto -webkit-focus-ring-color;
+}
+
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: #999;
+}
+
+.input-section {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.settings-item {
+    margin-bottom: 1.5rem;
+}
+
+.settings-item label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.settings-item input {
+    width: 100%;
+    max-width: 400px;
+    padding: 8px 12px;
+    font-size: 16px;
+    border: 1px solid #d3cec7;
+    border-radius: 4px;
+    background-color: #fffcf5;
+    color: #0d2942;
+}
+
+.validation-message {
+    color: #d32f2f;
+    font-size: 14px;
+    margin-top: 5px;
+    min-height: 20px;
+}
+
+#save-api-url {
+    background-color: #0080ff;
+    color: white;
+    border: none;
+    margin-top: 1rem;
+}
+
+#save-api-url:hover {
+    background-color: #0066cc;
+}
+
+/* File selection area styles */
+.file-selection-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 1rem 0;
+}
+
+.selected-file {
+    width: 100%;
+    max-width: 400px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    background-color: #f0ece5;
+    border: 1px solid #d3cec7;
+    border-radius: 4px;
+    text-align: center;
+    font-size: 0.9rem;
+    min-height: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    word-break: break-all;
+}
+
+#file-select-button {
+    background-color: #0080ff;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#file-select-button:hover {
+    background-color: #0066cc;
+}
+
+/* Transcription area styles */
+.transcription-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 1rem 0;
+}
+
+#transcribe-button {
+    background-color: #4caf50; /* Green */
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-bottom: 1rem;
+    font-weight: 500;
+}
+
+#transcribe-button:hover {
+    background-color: #45a049;
+}
+
+.message-zone {
+    width: 100%;
+    max-width: 600px;
+    min-height: 100px;
+    padding: 1rem;
+    background-color: #f0ece5;
+    border: 1px solid #d3cec7;
+    border-radius: 4px;
+    text-align: left;
+    font-size: 0.9rem;
+    word-break: break-word;
+    white-space: pre-wrap;
+    overflow-y: auto;
+    max-height: 300px;
+    font-family: monospace;
+}
+
+footer {
+    margin-top: 2rem;
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+/* Media queries for responsiveness */
+@media (max-width: 768px) {
+    .card {
+        padding: 1.5em;
+    }
+
+    #app {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .card {
+        padding: 1em;
+    }
+
+    button {
+        width: 100%;
+    }
+}

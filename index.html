@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="theme-color" content="#fffcf5" />
+        <meta
+            name="description"
+            content="Leontine - A modern, responsive client application for audio transcription using the WhisperX API"
+        />
+        <title>Leontine - Audio Transcription</title>
+        <link rel="stylesheet" href="style.css" />
+        <link rel="manifest" href="manifest.json" />
+        <link rel="icon" href="favicon.ico" type="image/x-icon" />
+    </head>
+    <body>
+        <div id="app">
+            <header>
+                <div class="logo-container">
+                    <h1>Leontine</h1>
+                    <p>Audio Transcription Client</p>
+                </div>
+            </header>
+
+            <main>
+                <section class="card">
+                    <h2>API Configuration</h2>
+
+                    <div class="settings-item">
+                        <label for="api-url">WhisperX API URL</label>
+                        <input
+                            type="url"
+                            id="api-url"
+                            name="api-url"
+                            placeholder="https://your-whisperx-api-url.com"
+                            required
+                        />
+                        <div
+                            class="validation-message"
+                            id="api-url-validation"
+                        ></div>
+                    </div>
+
+                    <button id="save-api-url" type="button">
+                        Save API URL
+                    </button>
+                </section>
+
+                <section class="card">
+                    <h2>Audio File Selection</h2>
+
+                    <div class="file-selection-area">
+                        <div class="selected-file" id="selected-file-display">
+                            No file selected
+                        </div>
+                        <input
+                            type="file"
+                            id="audio-file-input"
+                            accept="audio/*"
+                            style="display: none"
+                        />
+                        <button id="file-select-button" type="button">
+                            Select Audio File
+                        </button>
+                    </div>
+                </section>
+
+                <section class="card" id="transcription-section">
+                    <h2>Transcription</h2>
+
+                    <div class="transcription-area">
+                        <button
+                            id="transcribe-button"
+                            type="button"
+                            style="display: none"
+                        >
+                            Transcribe Audio
+                        </button>
+
+                        <div class="message-zone" id="message-display">
+                            Select a file to start transcription
+                        </div>
+                    </div>
+                </section>
+            </main>
+
+            <footer>
+                <p>Leontine - <small>WhisperX Client</small></p>
+            </footer>
+        </div>
+
+        <script src="app.js"></script>
+        <script>
+            // Register service worker for PWA
+            if ("serviceWorker" in navigator) {
+                window.addEventListener("load", () => {
+                    navigator.serviceWorker
+                        .register("sw.js")
+                        .then((reg) => console.log("Service worker registered"))
+                        .catch((err) =>
+                            console.log("Service worker not registered", err),
+                        );
+                });
+            }
+        </script>
+    </body>
+</html>
