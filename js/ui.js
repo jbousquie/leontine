@@ -60,6 +60,10 @@ const UI = (function () {
             transcribeButton: document.getElementById("transcribe-button"),
             messageDisplay: document.getElementById("message-display"),
 
+            // Results elements
+            resultContainer: document.createElement("div"),
+            copyResultButton: document.createElement("button"),
+
             // API status elements
             apiStatusIndicator: document.getElementById("api-status-indicator"),
             apiStatusMessage: document.getElementById("api-status-message"),
@@ -224,10 +228,27 @@ const UI = (function () {
 
     /**
      * Updates the message display with new text
-     * @param {string} message - The message to display
+     * @param {string|Object} message - The message to display
+     * @param {boolean} [isHtml=false] - Whether the message contains HTML
      */
-    function updateMessage(message) {
-        elements.messageDisplay.textContent = message;
+    function updateMessage(message, isHtml = false) {
+        // Convert objects or non-strings to string representation
+        let messageText = message;
+        if (typeof message !== "string") {
+            try {
+                messageText = JSON.stringify(message, null, 2);
+            } catch (e) {
+                messageText = String(message);
+            }
+        }
+
+        if (isHtml) {
+            elements.messageDisplay.innerHTML = messageText;
+        } else {
+            // Format plain text with line breaks
+            const formattedText = messageText.replace(/\n/g, "<br>");
+            elements.messageDisplay.innerHTML = formattedText;
+        }
     }
 
     /**
@@ -285,6 +306,87 @@ const UI = (function () {
         }
     }
 
+    /**
+     * Displays structured transcription results
+     * @param {Object} results - The transcription results object
+     */
+    function displayTranscriptionResults(results) {
+        if (!results) {
+            updateMessage("No transcription results available.");
+            return;
+        }
+
+        // Create a formatted HTML display of the transcription
+        let resultHtml = '<div class="transcription-result">';
+
+        // Add full text
+        if (results.text) {
+            resultHtml += `<div class="full-text">${results.text.replace(/\n/g, "<br>")}</div>`;
+        }
+
+        // Add language if available
+        if (results.language) {
+            resultHtml += `<div class="language"><strong>Language:</strong> ${results.language}</div>`;
+        }
+
+        // Add segments if available
+        if (results.segments && results.segments.length > 0) {
+            resultHtml += "<h3>Segments</h3>";
+            results.segments.forEach((segment, index) => {
+                const startTime = formatTimeCode(segment.start);
+                const endTime = formatTimeCode(segment.end);
+                resultHtml += `
+                <div class="segment">
+                    <span class="timestamp">[${startTime} → ${endTime}]</span>
+                    <span class="segment-text">${segment.text}</span>
+                </div>`;
+            });
+        }
+
+        resultHtml += "</div>";
+
+        // Add copy button
+        resultHtml +=
+            '<button class="copy-button" id="copy-transcription">Copy Transcription</button>';
+
+        // Update message with HTML
+        updateMessage(resultHtml, true);
+
+        // Add event listener for copy button
+        setTimeout(() => {
+            const copyButton = document.getElementById("copy-transcription");
+            if (copyButton) {
+                copyButton.addEventListener("click", () => {
+                    navigator.clipboard
+                        .writeText(results.text)
+                        .then(() => {
+                            copyButton.textContent = "Copied!";
+                            setTimeout(() => {
+                                copyButton.textContent = "Copy Transcription";
+                            }, 2000);
+                        })
+                        .catch((err) => {
+                            console.error("Failed to copy text: ", err);
+                            copyButton.textContent = "Copy failed";
+                        });
+                });
+            }
+        }, 100);
+    }
+
+    /**
+     * Formats time in seconds to a readable timecode format
+     * @param {number} timeInSeconds - Time in seconds
+     * @returns {string} Formatted timecode (MM:SS.ms)
+     */
+    function formatTimeCode(timeInSeconds) {
+        const minutes = Math.floor(timeInSeconds / 60);
+        const seconds = Math.floor(timeInSeconds % 60);
+        const milliseconds = Math.floor((timeInSeconds % 1) * 1000);
+
+        return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}.${milliseconds.toString().padStart(3, "0")}`;
+    }
+
     // Public methods
     return {
         init: init,
@@ -292,6 +394,7 @@ const UI = (function () {
         getSelectedFile: getSelectedFile,
         getApiUrl: getApiUrl,
         updateApiStatus: updateApiStatus,
+        displayTranscriptionResults: displayTranscriptionResults,
     };
 })();
 

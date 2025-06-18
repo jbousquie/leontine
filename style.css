@@ -231,10 +231,61 @@ button:disabled {
     text-align: left;
     font-size: 0.9rem;
     word-break: break-word;
-    white-space: pre-wrap;
+    white-space: normal;
     overflow-y: auto;
-    max-height: 300px;
+    max-height: 400px;
     font-family: monospace;
+    line-height: 1.5;
+}
+
+/* Transcription results styling */
+.transcription-result {
+    margin-bottom: 1rem;
+}
+
+.full-text {
+    margin-bottom: 1.5rem;
+    font-family: system-ui, sans-serif;
+    line-height: 1.6;
+    font-size: 1rem;
+}
+
+.language {
+    margin-bottom: 1rem;
+    font-style: italic;
+    color: #555;
+}
+
+.segment {
+    margin-bottom: 0.5rem;
+    font-family: system-ui, sans-serif;
+}
+
+.timestamp {
+    font-family: monospace;
+    color: #666;
+    margin-right: 0.5rem;
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+
+.segment-text {
+    font-size: 0.95rem;
+}
+
+.copy-button {
+    display: block;
+    margin-top: 1rem;
+    background-color: #4a5fad;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.copy-button:hover {
+    background-color: #363f77;
 }
 
 footer {
