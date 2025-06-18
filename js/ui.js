@@ -126,18 +126,18 @@ const UI = (function () {
 
         try {
             // Save to localStorage
-            localStorage.setItem("leontine_api_url", url);
+            localStorage.setItem(CONFIG.STORAGE_KEYS.API_URL, url);
 
             // Show success message
             elements.apiUrlValidation.textContent =
                 "API URL saved successfully!";
-            elements.apiUrlValidation.style.color = "#4CAF50"; // Green color
+            elements.apiUrlValidation.style.color = CONFIG.UI.SUCCESS_COLOR;
 
             // Reset message color after a delay
             setTimeout(() => {
-                elements.apiUrlValidation.style.color = "#d32f2f"; // Reset to default error color
+                elements.apiUrlValidation.style.color = CONFIG.UI.ERROR_COLOR; // Reset to default error color
                 elements.apiUrlValidation.textContent = "";
-            }, 3000);
+            }, CONFIG.UI.SUCCESS_MESSAGE_TIMEOUT);
 
             // Check API availability with new URL and start periodic checking
             if (api) {
@@ -158,7 +158,7 @@ const UI = (function () {
      * Loads saved API URL from localStorage
      */
     function loadSavedApiUrl() {
-        const savedUrl = localStorage.getItem("leontine_api_url");
+        const savedUrl = localStorage.getItem(CONFIG.STORAGE_KEYS.API_URL);
 
         if (savedUrl) {
             elements.apiUrlInput.value = savedUrl;
@@ -292,13 +292,13 @@ const UI = (function () {
 
         // Update indicator and message based on status
         switch (status) {
-            case "checking":
+            case CONFIG.STATUS.API_CHECKING:
                 elements.apiStatusIndicator.classList.add("checking");
                 elements.apiStatusMessage.textContent =
                     "Checking API availability...";
                 break;
 
-            case "available":
+            case CONFIG.STATUS.API_AVAILABLE:
                 elements.apiStatusIndicator.classList.add("available");
                 elements.apiStatusMessage.textContent = "API is accessible";
                 elements.apiStatusMessage.setAttribute(
@@ -307,7 +307,7 @@ const UI = (function () {
                 );
                 break;
 
-            case "unavailable":
+            case CONFIG.STATUS.API_UNAVAILABLE:
                 elements.apiStatusIndicator.classList.add("unavailable");
                 elements.apiStatusMessage.textContent = errorMessage
                     ? `Server not accessible: ${errorMessage}`

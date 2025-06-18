@@ -7,6 +7,14 @@
 document.addEventListener("DOMContentLoaded", () => {
     console.log("Initializing Leontine application...");
 
+    // Check if configuration is loaded
+    if (typeof CONFIG === "undefined") {
+        console.error(
+            "Configuration not loaded! Make sure conf.js is included before other scripts.",
+        );
+        return;
+    }
+
     // Initialize modules with cross-references
     UI.init(API);
     API.init(UI);

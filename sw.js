@@ -1,9 +1,10 @@
 // Service worker for Leontine PWA
-const CACHE_NAME = "leontine-cache-v2";
+const CACHE_NAME = "leontine-cache-v3";
 const urlsToCache = [
     "./",
     "./index.html",
     "./style.css",
+    "./js/conf.js",
     "./js/main.js",
     "./js/ui.js",
     "./js/api.js",

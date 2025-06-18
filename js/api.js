@@ -5,20 +5,7 @@
 
 // API Controller module
 const API = (function () {
-    // Configuration
-    const CONFIG = {
-        STATUS_CHECK_INTERVAL: 20000, // Interval to check status (20 seconds in milliseconds)
-        API_CHECK_INTERVAL: 30000, // Interval to check API availability (30 seconds in milliseconds)
-    };
-
-    // API endpoints
-    const API_ENDPOINTS = {
-        TEST: "/transcription/00", // Endpoint for API availability test
-        SUBMIT: "/transcription", // Endpoint to submit a new transcription job
-        STATUS: "/transcription/{job_id}", // Endpoint to check status (replace {job_id})
-        RESULT: "/transcription/{job_id}/result", // Endpoint to get results (replace {job_id})
-        CANCEL: "/transcription/{job_id}/cancel", // Endpoint to cancel job (replace {job_id})
-    };
+    // Configuration is now imported from conf.js
 
     // Current transcription job state
     let currentJob = {
@@ -108,7 +95,7 @@ const API = (function () {
         formData.append("sync", "false"); // Request async mode
 
         // Send the POST request to the API
-        fetch(`${apiUrl}${API_ENDPOINTS.SUBMIT}`, {
+        fetch(`${apiUrl}${CONFIG.API_ENDPOINTS.SUBMIT}`, {
             method: "POST",
             body: formData,
         })
@@ -138,7 +125,7 @@ const API = (function () {
                 if (data.job_id) {
                     // Update current job info
                     currentJob.jobId = data.job_id;
-                    currentJob.status = "Queued";
+                    currentJob.status = CONFIG.STATUS.JOB_QUEUED;
                     currentJob.lastUpdated = new Date();
 
                     // Update UI with success message
@@ -158,7 +145,7 @@ const API = (function () {
             })
             .catch((error) => {
                 // Handle errors
-                currentJob.status = "error";
+                currentJob.status = CONFIG.STATUS.UI_SENDING;
                 ui.updateMessage(`Error submitting file: ${error.message}`);
             });
     }
@@ -175,7 +162,7 @@ const API = (function () {
         // Set up interval for status checking
         currentJob.statusCheckInterval = setInterval(() => {
             checkJobStatus(apiUrl, jobId);
-        }, CONFIG.STATUS_CHECK_INTERVAL);
+        }, CONFIG.INTERVALS.STATUS_CHECK_INTERVAL);
 
         // Do an immediate check
         checkJobStatus(apiUrl, jobId);
@@ -198,7 +185,10 @@ const API = (function () {
      */
     function checkJobStatus(apiUrl, jobId) {
         // Replace the job_id placeholder in the endpoint
-        const statusEndpoint = API_ENDPOINTS.STATUS.replace("{job_id}", jobId);
+        const statusEndpoint = CONFIG.API_ENDPOINTS.STATUS.replace(
+            "{job_id}",
+            jobId,
+        );
 
         fetch(`${apiUrl}${statusEndpoint}`, {
             method: "GET",
@@ -303,8 +293,8 @@ const API = (function () {
 
                 // Check if job is completed or failed - we keep polling for processing
                 if (
-                    processedData.status === "Completed" ||
-                    processedData.status === "Failed"
+                    processedData.status === CONFIG.STATUS.JOB_COMPLETED ||
+                    processedData.status === CONFIG.STATUS.JOB_FAILED
                 ) {
                     stopStatusChecking();
 
@@ -320,7 +310,10 @@ const API = (function () {
                         // Add result endpoint URL and a message with an option to view results
                         const resultUrl =
                             apiUrl +
-                            API_ENDPOINTS.RESULT.replace("{job_id}", jobId);
+                            CONFIG.API_ENDPOINTS.RESULT.replace(
+                                "{job_id}",
+                                jobId,
+                            );
                         const resultMessage =
                             completionMessage +
                             "\nResults available at: " +
@@ -335,7 +328,9 @@ const API = (function () {
                         setTimeout(() => {
                             getTranscriptionResults(jobId);
                         }, 1000);
-                    } else if (processedData.status === "Failed") {
+                    } else if (
+                        processedData.status === CONFIG.STATUS.JOB_FAILED
+                    ) {
                         // Show detailed error information if available
                         let failureMessage = "Transcription failed.";
                         if (processedData.data) {
@@ -403,7 +398,7 @@ const API = (function () {
         }
 
         // Replace the job_id placeholder in the endpoint
-        const cancelEndpoint = API_ENDPOINTS.CANCEL.replace(
+        const cancelEndpoint = CONFIG.API_ENDPOINTS.CANCEL.replace(
             "{job_id}",
             currentJob.jobId,
         );
@@ -433,7 +428,7 @@ const API = (function () {
                     currentJob = {
                         jobId: null,
                         file: null,
-                        status: "idle",
+                        status: CONFIG.STATUS.UI_IDLE,
                         statusCheckInterval: null,
                         lastUpdated: null,
                     };
@@ -465,11 +460,11 @@ const API = (function () {
         if (!url) return Promise.resolve(false);
 
         // Update UI to show checking status
-        updateApiStatusUI("checking");
+        updateApiStatusUI(CONFIG.STATUS.API_CHECKING);
 
         // Make a request to a non-existent job to test the API
         // The API should return a 404, but that still means it's accessible
-        return fetch(`${url}${API_ENDPOINTS.TEST}`, {
+        return fetch(`${url}${CONFIG.API_ENDPOINTS.TEST}`, {
             method: "GET",
             headers: {
                 Accept: "application/json",
@@ -484,7 +479,7 @@ const API = (function () {
                     apiStatus.errorMessage = null;
 
                     // Update UI to show available status
-                    updateApiStatusUI("available");
+                    updateApiStatusUI(CONFIG.STATUS.API_AVAILABLE);
                     return true;
                 } else {
                     // Any other response suggests we're not reaching the actual API
@@ -498,7 +493,7 @@ const API = (function () {
                 apiStatus.errorMessage = error.message;
 
                 // Update UI to show unavailable status
-                updateApiStatusUI("unavailable", error.message);
+                updateApiStatusUI(CONFIG.STATUS.API_UNAVAILABLE, error.message);
                 return false;
             });
     }
@@ -589,7 +584,7 @@ const API = (function () {
                 `Checking API availability at ${new Date().toLocaleTimeString()}`,
             );
             checkApiAvailability(url);
-        }, CONFIG.API_CHECK_INTERVAL);
+        }, CONFIG.INTERVALS.API_CHECK_INTERVAL);
     }
 
     /**
