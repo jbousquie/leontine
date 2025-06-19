@@ -20,7 +20,7 @@ A modern, responsive client application for audio transcription using the Whispe
 - **Authentication Management**: Store and manage API credentials securely
 - **File Upload**: Drag-and-drop or file selection interface for audio files
 - **Transcription Options**: Configure language, model size, speaker diarization, and output format
-- **Status Tracking**: Real-time updates on transcription progress and queue position
+- **Status Tracking**: Real-time updates on transcription progress, queue position, and API queue state
 - **Result Management**: Copy to clipboard and download transcription results
 - **Responsive Design**: Works on desktop, tablet, and mobile devices
 - **Offline Capabilities**: PWA support for installation and basic offline functionality
@@ -37,10 +37,11 @@ A modern, responsive client application for audio transcription using the Whispe
 ## Usage
 
 1. Set your API URL and authentication token in the settings section
-2. Upload an audio file by dragging and dropping or using the file selector
-3. Configure transcription options (language, model, etc.)
-4. Click "Transcribe Audio" and monitor the progress
-5. When complete, view, copy, or download your transcription
+2. The application will check the API status and display server queue information
+3. Upload an audio file by dragging and dropping or using the file selector
+4. Configure transcription options (language, model, etc.)
+5. Click "Transcribe Audio" and monitor the progress
+6. When complete, view, copy, or download your transcription
 
 ## Development
 
@@ -54,6 +55,7 @@ Leontine is designed to work with the WhisperX API, which provides powerful audi
 - Speaker diarization
 - Various output formats
 - Queueing system for handling multiple requests
+- Status endpoint for monitoring API health and queue state
 
 For more information about the API, see the [WhisperX API repository](https://github.com/jbousquie/whisper_api).
 

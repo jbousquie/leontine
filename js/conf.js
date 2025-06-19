@@ -6,11 +6,12 @@
 const CONFIG = {
     // API URLs and endpoints
     API_ENDPOINTS: {
-        TEST: "/transcription/00", // Endpoint for API availability test
+        TEST: "/transcription/00", // Endpoint for API availability test (legacy)
         SUBMIT: "/transcription", // Endpoint to submit a new transcription job
         STATUS: "/transcription/{job_id}", // Endpoint to check status (replace {job_id})
         RESULT: "/transcription/{job_id}/result", // Endpoint to get results (replace {job_id})
         CANCEL: "/transcription/{job_id}/cancel", // Endpoint to cancel job (replace {job_id})
+        API_STATUS: "/status", // Endpoint to check API server status
     },
 
     // Timing intervals
@@ -48,7 +49,7 @@ const CONFIG = {
         SUCCESS_MESSAGE_TIMEOUT: 3000, // How long to show success messages (3 seconds)
         ERROR_COLOR: "#d32f2f",
         SUCCESS_COLOR: "#4CAF50",
-    }
+    },
 };
 
 // Make configuration available globally

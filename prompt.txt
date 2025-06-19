@@ -1,0 +1,200 @@
+# Leontine: Technical Architecture and Implementation Documentation
+
+## Project Overview
+
+Leontine is a Progressive Web Application (PWA) that provides a clean, modern client interface for the WhisperX API audio transcription service. Built with vanilla JavaScript, HTML, and CSS (without external libraries or frameworks), it follows a modular design pattern to create a maintainable, responsive interface for transcribing audio files.
+
+## Architecture
+
+### Module Structure
+
+The application follows a modular architecture based on the Immediately Invoked Function Expression (IIFE) pattern for encapsulation. The main modules are:
+
+1. **Configuration Module (`conf.js`)**
+   - Centralizes constants and configuration settings
+   - Defines API endpoints, timing intervals, storage keys, and status constants
+   - Establishes a single source of truth for application constants
+
+2. **UI Module (`ui.js`)**
+   - Manages all aspects of the user interface
+   - Handles DOM manipulation and event listeners
+   - Provides methods for displaying status updates and transcription results
+   - Maintains UI state and references to DOM elements
+
+3. **API Module (`api.js`)**
+   - Handles all communication with the WhisperX API
+   - Manages transcription job submissions
+   - Implements job status polling and result retrieval
+   - Monitors API availability using the status endpoint
+
+4. **Main Module (`main.js`)**
+   - Serves as the application entry point
+   - Coordinates initialization of other modules
+   - Handles cross-module references
+
+### Inter-Module Communication
+
+Modules reference each other through dependency injection at initialization:
+- `main.js` initializes both the UI and API modules
+- The UI and API modules are given references to each other
+- This bidirectional communication allows for clean separation of concerns while enabling modules to call methods on each other
+
+## Data Flow
+
+1. **Initialization**
+   - Configuration is loaded first (`conf.js`)
+   - Main module initializes UI and API modules with cross-references
+   - UI loads saved API URL from localStorage
+   - API checks availability of the configured endpoint
+
+2. **File Selection and Transcription**
+   - User sets API URL and selects audio file through UI
+   - UI updates its state and enables transcription button
+   - When user initiates transcription, UI delegates to API module
+   - API module formats and sends request to WhisperX API
+   - UI displays status messages during submission
+
+3. **Status Monitoring**
+   - API module begins polling for job status (based on configured interval)
+   - Status updates are passed to UI module for display
+   - Queue position is shown when available
+   - Upon completion or failure, polling stops
+
+4. **Results Handling**
+   - API module fetches complete transcription
+   - Results passed to UI for rendering
+   - UI formats transcription with timestamps
+   - UI provides copy functionality through clipboard API
+
+## Key Technical Implementations
+
+### Progressive Web App (PWA) Features
+
+1. **Service Worker (`sw.js`)**
+   - Provides offline capabilities through caching
+   - Implements install, activate, and fetch event handlers
+   - Uses cache-first strategy for static assets
+   - Maintains version control through cache naming
+
+2. **Web App Manifest (`manifest.json`)**
+   - Enables installation on various devices
+   - Defines app name, icons, colors, and display mode
+   - Configures start URL and scope
+
+### Asynchronous Processing Model
+
+1. **Polling Pattern**
+   - Implements interval-based status checking for transcription jobs
+   - Gracefully handles network errors during polling
+   - Uses configurable intervals to control polling frequency
+
+2. **Promise-Based API Communication**
+   - Uses fetch API for all server communication
+   - Implements proper error handling with promise chains
+   - Provides clear feedback during network operations
+
+### State Management
+
+1. **LocalStorage Persistence**
+   - Stores API URL between sessions
+   - Implements simple get/set pattern for managing stored values
+
+2. **Application State**
+   - Maintains job state in API module
+   - Tracks UI state separately in UI module
+   - Implements unidirectional data flow for state updates
+
+### Security Considerations
+
+1. **API Authentication**
+   - Includes authentication token support
+   - Uses proper headers for API requests
+
+2. **Error Handling**
+   - Implements comprehensive error handling
+   - Provides clear user feedback for various error conditions
+   - Gracefully degrades functionality when API is unavailable
+
+## File Structure
+
+```
+leontine/
+├── index.html          # Main HTML entry point
+├── style.css           # Global styles
+├── manifest.json       # PWA manifest file
+├── sw.js              # Service worker for offline functionality
+├── favicon.ico        # Site favicon
+├── js/                # JavaScript modules
+│   ├── conf.js        # Configuration constants
+│   ├── main.js        # Application entry point
+│   ├── ui.js          # User interface management
+│   └── api.js         # API communication
+└── images/            # Icons for PWA installation
+    ├── icon-192.png   # 192×192 app icon
+    └── icon-512.png   # 512×512 app icon
+```
+
+## API Communication
+
+The application communicates with the WhisperX API using the following endpoints:
+
+1. **API Status (`/status`)**
+   - Checks API availability and retrieves queue information
+   - Returns server status, processing settings, and queue state
+
+2. **Job Submission (`/transcription`)**
+   - Submits audio files for transcription
+   - Returns job ID and status URL for tracking
+
+3. **Job Status (`/transcription/{job_id}`)**
+   - Checks status of submitted transcription job
+   - Returns current status, queue position, and other metadata
+
+4. **Job Results (`/transcription/{job_id}/result`)**
+   - Retrieves completed transcription
+   - Returns full text, detected language, and timed segments
+
+5. **Job Cancellation (`/transcription/{job_id}/cancel`)**
+   - Cancels in-progress transcription job
+   - Returns success/failure status
+
+## Enhancement Potential
+
+The architecture supports several paths for future enhancement:
+
+1. **Additional Transcription Options**
+   - Language selection
+   - Speaker diarization control
+   - Model size configuration
+
+2. **Results Management**
+   - Saving transcriptions locally
+   - Support for alternative formats (SRT, VTT)
+   - Batch processing of multiple files
+
+3. **UI Enhancements**
+   - Dark mode support
+   - Advanced progress visualization
+   - User accounts and history
+
+## Technical Decisions and Rationales
+
+1. **No External Dependencies**
+   - Ensures small file size and fast loading
+   - Reduces security vulnerabilities
+   - Simplifies maintenance and understanding
+
+2. **Module Pattern (IIFE)**
+   - Provides encapsulation without build tools
+   - Prevents global namespace pollution
+   - Allows clear public/private method separation
+
+3. **Service Worker Implementation**
+   - Enables offline functionality
+   - Improves performance through caching
+   - Provides foundation for background processing
+
+4. **Responsive Design**
+   - CSS-based responsive layout
+   - Mobile-first approach
+   - Flexible components that adapt to viewport size

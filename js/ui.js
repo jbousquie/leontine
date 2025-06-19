@@ -278,8 +278,9 @@ const UI = (function () {
      * Updates the API status indicator and message
      * @param {string} status - The status ('checking', 'available', 'unavailable')
      * @param {string} [errorMessage] - Optional error message for unavailable status
+     * @param {string} [queueInfo] - Optional queue information when API is available
      */
-    function updateApiStatus(status, errorMessage) {
+    function updateApiStatus(status, errorMessage, queueInfo) {
         // Update state
         state.apiStatus = status;
 
@@ -300,7 +301,9 @@ const UI = (function () {
 
             case CONFIG.STATUS.API_AVAILABLE:
                 elements.apiStatusIndicator.classList.add("available");
-                elements.apiStatusMessage.textContent = "API is accessible";
+                elements.apiStatusMessage.textContent = queueInfo
+                    ? `API is accessible - ${queueInfo}`
+                    : "API is accessible";
                 elements.apiStatusMessage.setAttribute(
                     "title",
                     `Last checked: ${new Date().toLocaleTimeString()}`,

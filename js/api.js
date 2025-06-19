@@ -21,6 +21,7 @@ const API = (function () {
         available: false,
         lastChecked: null,
         errorMessage: null,
+        statusData: null, // Data received from status endpoint
         checkInterval: null, // Interval ID for periodic API checking
     };
 
@@ -452,7 +453,7 @@ const API = (function () {
     }
 
     /**
-     * Checks if the API is available by making a test request
+     * Checks if the API is available by making a request to the status endpoint
      * @param {string} url - The API URL to check
      * @returns {Promise<boolean>} - Promise resolving to API availability
      */
@@ -462,27 +463,37 @@ const API = (function () {
         // Update UI to show checking status
         updateApiStatusUI(CONFIG.STATUS.API_CHECKING);
 
-        // Make a request to a non-existent job to test the API
-        // The API should return a 404, but that still means it's accessible
-        return fetch(`${url}${CONFIG.API_ENDPOINTS.TEST}`, {
+        // Make a request to the API status endpoint
+        return fetch(`${url}${CONFIG.API_ENDPOINTS.API_STATUS}`, {
             method: "GET",
             headers: {
                 Accept: "application/json",
             },
         })
             .then((response) => {
-                // Only consider the API available if we get a 404 response
-                // This ensures we're talking to the actual API and not a proxy
-                if (response.status === 404) {
-                    apiStatus.available = true;
-                    apiStatus.lastChecked = new Date();
-                    apiStatus.errorMessage = null;
+                if (response.status === 200) {
+                    // Process the JSON response
+                    return response.json().then((data) => {
+                        apiStatus.available = true;
+                        apiStatus.lastChecked = new Date();
+                        apiStatus.errorMessage = null;
+                        apiStatus.statusData = data;
 
-                    // Update UI to show available status
-                    updateApiStatusUI(CONFIG.STATUS.API_AVAILABLE);
-                    return true;
+                        // Update UI to show available status with queue information
+                        let queueInfo = "";
+                        if (data.queue_state) {
+                            queueInfo = `Queued jobs: ${data.queue_state.queued_jobs}, Processing jobs: ${data.queue_state.processing_jobs}`;
+                        }
+
+                        updateApiStatusUI(
+                            CONFIG.STATUS.API_AVAILABLE,
+                            null,
+                            queueInfo,
+                        );
+                        return true;
+                    });
                 } else {
-                    // Any other response suggests we're not reaching the actual API
+                    // Unexpected response code
                     throw new Error(`Unexpected response (${response.status})`);
                 }
             })
@@ -491,6 +502,7 @@ const API = (function () {
                 apiStatus.available = false;
                 apiStatus.lastChecked = new Date();
                 apiStatus.errorMessage = error.message;
+                apiStatus.statusData = null;
 
                 // Update UI to show unavailable status
                 updateApiStatusUI(CONFIG.STATUS.API_UNAVAILABLE, error.message);
@@ -502,11 +514,12 @@ const API = (function () {
      * Updates the UI to reflect the current API status
      * @param {string} status - The status to display ('checking', 'available', 'unavailable')
      * @param {string} [errorMessage] - Optional error message for unavailable status
+     * @param {string} [queueInfo] - Optional queue information when API is available
      */
-    function updateApiStatusUI(status, errorMessage) {
+    function updateApiStatusUI(status, errorMessage, queueInfo) {
         // Call UI update method if available
         if (ui && ui.updateApiStatus) {
-            ui.updateApiStatus(status, errorMessage);
+            ui.updateApiStatus(status, errorMessage, queueInfo);
         }
     }
 
@@ -527,7 +540,10 @@ const API = (function () {
         ui.updateMessage(`Retrieving results for job ${jobId}...`);
 
         // Replace the job_id placeholder in the endpoint
-        const resultEndpoint = API_ENDPOINTS.RESULT.replace("{job_id}", jobId);
+        const resultEndpoint = CONFIG.API_ENDPOINTS.RESULT.replace(
+            "{job_id}",
+            jobId,
+        );
 
         // Fetch the results
         return fetch(`${apiUrl}${resultEndpoint}`, {
