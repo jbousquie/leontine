@@ -62,9 +62,10 @@ Modules reference each other through dependency injection at initialization:
 
 4. **Results Handling**
    - API module fetches complete transcription
-   - Results passed to UI for rendering
-   - UI formats transcription with timestamps
-   - UI provides copy functionality through clipboard API
+   - UI provides download button when transcription is complete
+   - Browser's native save dialog allows user to choose save location and filename
+   - Transcription is downloaded as a text file
+   - Transcription interface is cleared after successful download
 
 ## Key Technical Implementations
 
@@ -149,10 +150,12 @@ The application communicates with the WhisperX API using the following endpoints
 3. **Job Status (`/transcription/{job_id}`)**
    - Checks status of submitted transcription job
    - Returns current status, queue position, and other metadata
+   - Triggers download interface when job status is "Completed"
 
 4. **Job Results (`/transcription/{job_id}/result`)**
    - Retrieves completed transcription
    - Returns full text, detected language, and timed segments
+   - Content is downloaded directly to user's device as a text file
 
 5. **Job Cancellation (`/transcription/{job_id}/cancel`)**
    - Cancels in-progress transcription job
@@ -168,9 +171,10 @@ The architecture supports several paths for future enhancement:
    - Model size configuration
 
 2. **Results Management**
-   - Saving transcriptions locally
-   - Support for alternative formats (SRT, VTT)
+   - Support for different output formats (TXT, SRT, VTT, JSON)
    - Batch processing of multiple files
+   - Enhanced file naming options
+   - Transcription editing before saving
 
 3. **UI Enhancements**
    - Dark mode support

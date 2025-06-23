@@ -21,7 +21,7 @@ A modern, responsive client application for audio transcription using the Whispe
 - **File Upload**: Drag-and-drop or file selection interface for audio files
 - **Transcription Options**: Configure language, model size, speaker diarization, and output format
 - **Status Tracking**: Real-time updates on transcription progress, queue position, and API queue state
-- **Result Management**: Copy to clipboard and download transcription results
+- **Result Management**: Download transcription results as text files
 - **Responsive Design**: Works on desktop, tablet, and mobile devices
 - **Offline Capabilities**: PWA support for installation and basic offline functionality
 - **Persistent Settings**: Save user preferences between sessions
@@ -41,7 +41,7 @@ A modern, responsive client application for audio transcription using the Whispe
 3. Upload an audio file by dragging and dropping or using the file selector
 4. Configure transcription options (language, model, etc.)
 5. Click "Transcribe Audio" and monitor the progress
-6. When complete, view, copy, or download your transcription
+6. When complete, download your transcription as a text file
 
 ## Development
 

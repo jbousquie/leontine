@@ -37,6 +37,10 @@ const CONFIG = {
         UI_IDLE: "idle",
         UI_SENDING: "sending",
         UI_ERROR: "error",
+        UI_TRANSCRIPTION_COMPLETE: "transcription_complete",
+        UI_TRANSCRIPTION_FAILED: "transcription_failed",
+        UI_DOWNLOADING: "downloading",
+        UI_CLEANUP: "cleanup",
 
         // API availability status values
         API_CHECKING: "checking",

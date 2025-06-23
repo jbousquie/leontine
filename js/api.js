@@ -146,8 +146,12 @@ const API = (function () {
             })
             .catch((error) => {
                 // Handle errors
-                currentJob.status = CONFIG.STATUS.UI_SENDING;
+                currentJob.status = CONFIG.STATUS.UI_ERROR;
                 ui.updateMessage(`Error submitting file: ${error.message}`);
+                // Re-enable the transcribe button on error
+                if (ui.resetTranscribing) {
+                    ui.resetTranscribing();
+                }
             });
     }
 
@@ -300,6 +304,7 @@ const API = (function () {
                     stopStatusChecking();
 
                     // If completed, show additional info
+                    // If completed or processing (which means completed), show additional info
                     if (
                         processedData.status === "completed" ||
                         processedData.status === "Completed"
@@ -308,27 +313,21 @@ const API = (function () {
                         const completionMessage =
                             "Transcription is complete. Results are available.";
 
-                        // Add result endpoint URL and a message with an option to view results
+                        // Add result endpoint URL
                         const resultUrl =
                             apiUrl +
                             CONFIG.API_ENDPOINTS.RESULT.replace(
                                 "{job_id}",
                                 jobId,
                             );
-                        const resultMessage =
-                            completionMessage +
-                            "\nResults available at: " +
-                            resultUrl +
-                            "\n\nRetrieving transcription results...";
 
+                        // Update status message and show download button
                         ui.updateMessage(
-                            statusMessage + "\n\n" + resultMessage,
+                            statusMessage + "\n\n" + completionMessage,
                         );
 
-                        // Automatically fetch results after a short delay
-                        setTimeout(() => {
-                            getTranscriptionResults(jobId);
-                        }, 1000);
+                        // Show the download button
+                        ui.showDownloadButton(jobId, resultUrl);
                     } else if (
                         processedData.status === CONFIG.STATUS.JOB_FAILED
                     ) {
@@ -345,6 +344,9 @@ const API = (function () {
                         ui.updateMessage(
                             statusMessage + "\n\n" + failureMessage,
                         );
+
+                        // Show error status in UI
+                        ui.showTranscriptionError(failureMessage);
                     }
                 }
             })
@@ -365,6 +367,16 @@ const API = (function () {
                                 : "None"
                         }`,
                 );
+
+                // For non-temporary errors, display error state and re-enable button
+                if (errorPrefix === "Error") {
+                    if (ui.showTranscriptionError) {
+                        ui.showTranscriptionError(`${error.message}`);
+                    }
+
+                    // Stop checking status for permanent errors
+                    stopStatusChecking();
+                }
             });
     }
 
@@ -536,9 +548,6 @@ const API = (function () {
             return Promise.reject(new Error("API URL or Job ID not available"));
         }
 
-        // Update UI
-        ui.updateMessage(`Retrieving results for job ${jobId}...`);
-
         // Replace the job_id placeholder in the endpoint
         const resultEndpoint = CONFIG.API_ENDPOINTS.RESULT.replace(
             "{job_id}",
@@ -561,10 +570,6 @@ const API = (function () {
                 return response.json();
             })
             .then((data) => {
-                // Use the enhanced UI display method for results
-                ui.displayTranscriptionResults(data);
-
-                // Return the data for further processing if needed
                 return data;
             })
             .catch((error) => {
@@ -613,6 +618,68 @@ const API = (function () {
         }
     }
 
+    /**
+     * Downloads the transcription file
+     * @param {string} jobId - The job ID of the transcription
+     */
+    function downloadTranscription(jobId) {
+        // Get the API URL
+        const apiUrl = ui.getApiUrl();
+        if (!apiUrl || !jobId) {
+            ui.updateMessage("Error: API URL or Job ID not available");
+            return;
+        }
+
+        // Update UI to show download is in progress
+        ui.updateMessage(`Downloading transcription for job ${jobId}...`);
+
+        // Get the transcription results
+        getTranscriptionResults(jobId)
+            .then((data) => {
+                // Create content using text format
+                let content, filename, mimeType;
+
+                // Default to text format
+                content = data.text || "";
+                filename = `transcription_${jobId}.txt`;
+                mimeType = "text/plain";
+
+                // Create a blob from the content
+                const blob = new Blob([content], { type: mimeType });
+
+                // Create a download link and trigger it
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.style.display = "none";
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+
+                // Clean up
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+
+                // Update UI to show download is complete and remove transcription area
+                ui.updateMessage(`Transcription downloaded as ${filename}`);
+
+                // Remove the download section after a short delay
+                setTimeout(() => {
+                    ui.removeTranscriptionArea();
+                }, 2000);
+            })
+            .catch((error) => {
+                ui.updateMessage(
+                    `Error downloading transcription: ${error.message}`,
+                );
+
+                // Re-enable the transcribe button on download error
+                if (ui.resetTranscribing) {
+                    ui.resetTranscribing();
+                }
+            });
+    }
+
     // Public methods
     return {
         init: init,
@@ -622,6 +689,7 @@ const API = (function () {
         getTranscriptionResults: getTranscriptionResults,
         startPeriodicApiCheck: startPeriodicApiCheck,
         stopPeriodicApiCheck: stopPeriodicApiCheck,
+        downloadTranscription: downloadTranscription,
     };
 })();
 

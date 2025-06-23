@@ -13,6 +13,10 @@ const UI = (function () {
         fileSelected: false,
         currentFileName: null,
         apiStatus: "unknown", // 'unknown', 'checking', 'available', 'unavailable'
+        transcriptionComplete: false,
+        currentJobId: null,
+        resultUrl: null,
+        transcribing: false, // Indicates if transcription is in progress
     };
 
     // Reference to external modules
@@ -62,7 +66,8 @@ const UI = (function () {
 
             // Results elements
             resultContainer: document.createElement("div"),
-            copyResultButton: document.createElement("button"),
+            downloadButton: document.createElement("button"),
+            transcriptionStatus: document.createElement("div"),
 
             // API status elements
             apiStatusIndicator: document.getElementById("api-status-indicator"),
@@ -208,9 +213,13 @@ const UI = (function () {
      */
     function updateTranscriptionUI() {
         if (state.fileSelected) {
-            elements.transcribeButton.style.display = "block";
-            elements.messageDisplay.textContent =
-                "Ready to transcribe. Click the button to start.";
+            if (state.transcribing) {
+                elements.transcribeButton.style.display = "none";
+            } else {
+                elements.transcribeButton.style.display = "block";
+                elements.messageDisplay.textContent =
+                    "Ready to transcribe. Click the button to start.";
+            }
         } else {
             elements.transcribeButton.style.display = "none";
             elements.messageDisplay.textContent =
@@ -226,6 +235,10 @@ const UI = (function () {
         // Update UI to show processing state
         elements.messageDisplay.textContent =
             "Preparing to send file for transcription...";
+
+        // Disable/hide the transcribe button
+        state.transcribing = true;
+        updateTranscriptionUI();
 
         // Call API module's transcribe method if available
         if (api && api.handleTranscription) {
@@ -256,6 +269,10 @@ const UI = (function () {
             const formattedText = messageText.replace(/\n/g, "<br>");
             elements.messageDisplay.innerHTML = formattedText;
         }
+
+        // Ensure the message display is scrolled to the bottom
+        elements.messageDisplay.scrollTop =
+            elements.messageDisplay.scrollHeight;
     }
 
     /**
@@ -327,71 +344,134 @@ const UI = (function () {
     }
 
     /**
-     * Displays structured transcription results
-     * @param {Object} results - The transcription results object
+     * Shows the download button when a transcription is complete
+     * @param {string} jobId - The completed job ID
+     * @param {string} resultUrl - The URL to download the transcription from
      */
-    function displayTranscriptionResults(results) {
-        if (!results) {
-            updateMessage("No transcription results available.");
-            return;
+    function showDownloadButton(jobId, resultUrl) {
+        // Update state
+        state.transcriptionComplete = true;
+        state.currentJobId = jobId;
+        state.resultUrl = resultUrl;
+        state.transcribing = true; // Keep the transcribe button hidden
+
+        // Create a container for the download section if not exists
+        let downloadSection = document.getElementById("download-section");
+        if (!downloadSection) {
+            downloadSection = document.createElement("div");
+            downloadSection.id = "download-section";
+            downloadSection.className = "download-section";
+            elements.messageDisplay.insertAdjacentElement(
+                "afterend",
+                downloadSection,
+            );
+        } else {
+            // Clear existing content
+            downloadSection.innerHTML = "";
         }
 
-        // Create a formatted HTML display of the transcription
-        let resultHtml = '<div class="transcription-result">';
+        // Add a success message
+        const statusMessage = document.createElement("div");
+        statusMessage.className = "transcription-status success";
+        statusMessage.textContent = "Transcription available";
+        downloadSection.appendChild(statusMessage);
 
-        // Add full text
-        if (results.text) {
-            resultHtml += `<div class="full-text">${results.text.replace(/\n/g, "<br>")}</div>`;
-        }
+        // Create download button
+        const downloadButton = document.createElement("button");
+        downloadButton.id = "download-transcription";
+        downloadButton.className = "download-button";
+        downloadButton.textContent = "Download Transcription";
+        downloadSection.appendChild(downloadButton);
 
-        // Add language if available
-        if (results.language) {
-            resultHtml += `<div class="language"><strong>Language:</strong> ${results.language}</div>`;
-        }
+        // Format selector removed as requested
 
-        // Add segments if available
-        if (results.segments && results.segments.length > 0) {
-            resultHtml += "<h3>Segments</h3>";
-            results.segments.forEach((segment, index) => {
-                const startTime = formatTimeCode(segment.start);
-                const endTime = formatTimeCode(segment.end);
-                resultHtml += `
-                <div class="segment">
-                    <span class="timestamp">[${startTime} → ${endTime}]</span>
-                    <span class="segment-text">${segment.text}</span>
-                </div>`;
-            });
-        }
-
-        resultHtml += "</div>";
-
-        // Add copy button
-        resultHtml +=
-            '<button class="copy-button" id="copy-transcription">Copy Transcription</button>';
-
-        // Update message with HTML
-        updateMessage(resultHtml, true);
-
-        // Add event listener for copy button
-        setTimeout(() => {
-            const copyButton = document.getElementById("copy-transcription");
-            if (copyButton) {
-                copyButton.addEventListener("click", () => {
-                    navigator.clipboard
-                        .writeText(results.text)
-                        .then(() => {
-                            copyButton.textContent = "Copied!";
-                            setTimeout(() => {
-                                copyButton.textContent = "Copy Transcription";
-                            }, 2000);
-                        })
-                        .catch((err) => {
-                            console.error("Failed to copy text: ", err);
-                            copyButton.textContent = "Copy failed";
-                        });
-                });
+        // Add event listener for download button
+        downloadButton.addEventListener("click", () => {
+            // Call API to download with default format
+            if (api && api.downloadTranscription) {
+                api.downloadTranscription(jobId);
             }
-        }, 100);
+        });
+    }
+
+    /**
+     * Shows an error message when transcription fails
+     * @param {string} errorMessage - The error message to display
+     */
+    function showTranscriptionError(errorMessage) {
+        // Update state
+        state.transcriptionComplete = false;
+        state.currentJobId = null;
+        state.resultUrl = null;
+        state.transcribing = false; // Re-enable the transcribe button
+
+        // Create a container for the status section if not exists
+        let statusSection = document.getElementById("download-section");
+        if (!statusSection) {
+            statusSection = document.createElement("div");
+            statusSection.id = "download-section";
+            statusSection.className = "download-section";
+            elements.messageDisplay.insertAdjacentElement(
+                "afterend",
+                statusSection,
+            );
+        } else {
+            // Clear existing content
+            statusSection.innerHTML = "";
+        }
+
+        // Add an error message
+        const statusMessage = document.createElement("div");
+        statusMessage.className = "transcription-status error";
+        statusMessage.textContent = "Transcription failed";
+        statusSection.appendChild(statusMessage);
+
+        // Add detailed error message
+        const errorDetail = document.createElement("div");
+        errorDetail.className = "error-detail";
+        errorDetail.textContent = errorMessage;
+        statusSection.appendChild(errorDetail);
+
+        // Update UI to show transcribe button again
+        updateTranscriptionUI();
+    }
+
+    /**
+     * Removes the transcription area (download section) from the UI
+     * Called after successful download to clean up the UI
+     */
+    function removeTranscriptionArea() {
+        // Reset state
+        state.transcriptionComplete = false;
+        state.currentJobId = null;
+        state.resultUrl = null;
+        state.transcribing = false; // Re-enable the transcribe button
+
+        // Find and animate the download section before removing
+        const downloadSection = document.getElementById("download-section");
+        if (downloadSection) {
+            // Add removing class to trigger animation
+            downloadSection.classList.add("removing");
+
+            // Remove after animation completes
+            setTimeout(() => {
+                downloadSection.remove();
+
+                // Update message to indicate cleanup
+                updateMessage(
+                    "Transcription downloaded and saved. Ready for new file.",
+                );
+                // Update UI to show transcribe button again
+                updateTranscriptionUI();
+            }, 500); // Match animation duration from CSS
+        } else {
+            // Update message immediately if section doesn't exist
+            updateMessage(
+                "Transcription downloaded and saved. Ready for new file.",
+            );
+            // Update UI to show transcribe button again
+            updateTranscriptionUI();
+        }
     }
 
     /**
@@ -407,6 +487,15 @@ const UI = (function () {
         return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}.${milliseconds.toString().padStart(3, "0")}`;
     }
 
+    /**
+     * Resets the transcribing state to enable the transcribe button again
+     * Used when errors occur or transcription process is cancelled
+     */
+    function resetTranscribing() {
+        state.transcribing = false;
+        updateTranscriptionUI();
+    }
+
     // Public methods
     return {
         init: init,
@@ -414,7 +503,10 @@ const UI = (function () {
         getSelectedFile: getSelectedFile,
         getApiUrl: getApiUrl,
         updateApiStatus: updateApiStatus,
-        displayTranscriptionResults: displayTranscriptionResults,
+        showDownloadButton: showDownloadButton,
+        showTranscriptionError: showTranscriptionError,
+        removeTranscriptionArea: removeTranscriptionArea,
+        resetTranscribing: resetTranscribing,
     };
 })();
 
