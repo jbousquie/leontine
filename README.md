@@ -8,8 +8,8 @@ A modern, responsive client application for audio transcription using the Whispe
 - Implement a responsive design that works well on both desktop and mobile devices
 - Support Progressive Web App (PWA) capabilities for installation on various devices
 - Provide a clean, intuitive UI for uploading audio files and managing transcription settings
-- Display real-time transcription status with queue position and progress indicators
-- Enable easy access to transcription results with copying and downloading options
+- **Display real-time transcription status with queue position and visual progress indicators**
+- **Enable easy access to transcription results with copying and downloading options**
 - Support various output formats (text, subtitles, JSON)
 - **Store user preferences for seamless experience across sessions**
 - **Persist transcription jobs across browser sessions**
@@ -28,7 +28,7 @@ A modern, responsive client application for audio transcription using the Whispe
 - **Offline Capabilities**: PWA support for installation and basic offline functionality
 - **Persistent Settings**: Save user preferences between sessions
 - **Job Persistence**: Resume transcription jobs after browser restart or page reload
-- **Visual Processing Indicators**: Animated hourglass icon showing active job processing
+- **Enhanced Visual Indicators**: Large animated hourglass next to section headings and animated dots for status updates
 - **Clear Notifications**: Contextual feedback for user actions
 
 ## Installation
@@ -47,7 +47,7 @@ A modern, responsive client application for audio transcription using the Whispe
 5. Click "Transcribe Audio" and monitor the progress
 6. When complete, download your transcription as a text file
 7. If you close the browser during transcription, the job will automatically resume when you return to the application
-8. Visual indicators (animated hourglass) show when a transcription job is actively processing
+8. Enhanced visual indicators (large animated hourglass and animated status dots) clearly show when a transcription job is actively processing
 
 ## Development
 

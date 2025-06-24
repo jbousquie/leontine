@@ -21,6 +21,8 @@ const UI = (function () {
         animationFrame: 0, // Current frame in the animation sequence
         originalMessage: "", // Original message without animation
         messageIsHtml: false, // Whether the original message is HTML
+        largeHourglassInterval: null, // Interval for the large hourglass animation
+        processingActive: false, // Whether processing is currently active
     };
 
     // Reference to external modules
@@ -45,6 +47,9 @@ const UI = (function () {
 
         // Update initial UI state
         updateTranscriptionUI();
+
+        // Initialize large hourglass
+        initLargeHourglass();
 
         // Check for pending job (display will be handled when API initializes)
         const jobId = localStorage.getItem(CONFIG.STORAGE_KEYS.CURRENT_JOB_ID);
@@ -87,6 +92,11 @@ const UI = (function () {
             fileSelectButton: document.getElementById("file-select-button"),
             selectedFileDisplay: document.getElementById(
                 "selected-file-display",
+            ),
+
+            // Processing indicator
+            processingIndicator: document.getElementById(
+                "processing-indicator",
             ),
 
             // Transcription elements
@@ -307,13 +317,15 @@ const UI = (function () {
         const jobId = localStorage.getItem(CONFIG.STORAGE_KEYS.CURRENT_JOB_ID);
         const jobStatus = localStorage.getItem(CONFIG.STORAGE_KEYS.JOB_STATUS);
 
+        let isProcessing = false;
+
         if (
             jobId &&
             jobStatus !== CONFIG.STATUS.JOB_COMPLETED &&
             jobStatus !== CONFIG.STATUS.JOB_FAILED
         ) {
-            // We have a pending job, start animation if not already running
-            startProcessingAnimation(messageText, isHtml);
+            // We have a pending job, start animation
+            isProcessing = true;
         } else if (
             messageText.includes("Preparing to send") ||
             messageText.includes("Sending") ||
@@ -321,11 +333,45 @@ const UI = (function () {
             messageText.includes("Processing") ||
             messageText.includes("Resuming")
         ) {
-            // Message indicates active processing, start animation
+            // Message indicates active processing
+            isProcessing = true;
+        }
+
+        if (isProcessing) {
+            // Start animations
             startProcessingAnimation(messageText, isHtml);
+            toggleLargeHourglass(true);
+
+            // Apply dots animation by adding the class and modifying text
+            let formattedText = messageText;
+
+            // For any job status message, ensure we add dots animation ONLY to the Status line
+            if (!isHtml) {
+                // Find the specific status line
+                const lines = messageText.split("\n");
+                for (let i = 0; i < lines.length; i++) {
+                    // Only add dots animation to the Status line when it contains specific status values
+                    if (
+                        lines[i].startsWith("Status:") &&
+                        (lines[i].includes(CONFIG.STATUS.JOB_QUEUED) ||
+                            lines[i].includes(CONFIG.STATUS.JOB_PROCESSING))
+                    ) {
+                        // Remove any existing dots
+                        lines[i] = lines[i].replace(/\.{1,3}$/, "");
+                        // Add class to this line with specific styling
+                        lines[i] =
+                            `<span class="status-with-dots">${lines[i]}</span>`;
+                    }
+                }
+                formattedText = lines.join("\n").replace(/\n/g, "<br>");
+                elements.messageDisplay.innerHTML = formattedText;
+            } else {
+                elements.messageDisplay.innerHTML = messageText;
+            }
         } else {
-            // No active processing, stop animation and display normal message
+            // No active processing, stop animations and display normal message
             stopProcessingAnimation();
+            toggleLargeHourglass(false);
 
             if (isHtml) {
                 elements.messageDisplay.innerHTML = messageText;
@@ -359,32 +405,15 @@ const UI = (function () {
             state.animationFrame = 0;
         }
 
-        // Start the animation interval
-        state.animationInterval = setInterval(() => {
-            // Toggle between animation frames
-            state.animationFrame =
-                (state.animationFrame + 1) %
-                CONFIG.UI.ANIMATION.ANIMATION_FRAMES.length;
+        // Flag processing as active
+        state.processingActive = true;
 
-            // Get current animation frame
-            const animationIcon =
-                CONFIG.UI.ANIMATION.ANIMATION_FRAMES[state.animationFrame];
+        // We're not adding the small hourglass at the beginning anymore
+        // Just store the message for state tracking
 
-            // Format the message with animation frame
-            let displayMessage = `${animationIcon} ${state.originalMessage}`;
-
-            // Update the message display
-            if (state.messageIsHtml) {
-                elements.messageDisplay.innerHTML = displayMessage;
-            } else {
-                const formattedText = displayMessage.replace(/\n/g, "<br>");
-                elements.messageDisplay.innerHTML = formattedText;
-            }
-
-            // Ensure the message display is scrolled to the bottom
-            elements.messageDisplay.scrollTop =
-                elements.messageDisplay.scrollHeight;
-        }, CONFIG.UI.ANIMATION.ANIMATION_INTERVAL);
+        // Ensure the message display is scrolled to the bottom
+        elements.messageDisplay.scrollTop =
+            elements.messageDisplay.scrollHeight;
     }
 
     /**
@@ -395,6 +424,9 @@ const UI = (function () {
             clearInterval(state.animationInterval);
             state.animationInterval = null;
         }
+
+        // Flag processing as inactive
+        state.processingActive = false;
 
         // If there was an original message, restore it without the animation
         if (state.originalMessage) {
@@ -407,6 +439,54 @@ const UI = (function () {
                 );
                 elements.messageDisplay.innerHTML = formattedText;
             }
+        }
+    }
+
+    /**
+     * Initializes the large hourglass animation
+     */
+    function initLargeHourglass() {
+        if (!elements.processingIndicator) return;
+
+        // Style the hourglass initially
+        elements.processingIndicator.textContent =
+            CONFIG.UI.ANIMATION.PROCESSING_ICON;
+        elements.processingIndicator.classList.remove("active");
+    }
+
+    /**
+     * Toggles the large hourglass animation next to the Transcription title
+     * @param {boolean} active - Whether to show the hourglass animation
+     */
+    function toggleLargeHourglass(active) {
+        if (!elements.processingIndicator) return;
+
+        if (active && !state.largeHourglassInterval) {
+            // Show the hourglass
+            elements.processingIndicator.classList.add("active");
+
+            // Start the animation
+            state.animationFrame = 0;
+            state.largeHourglassInterval = setInterval(() => {
+                // Toggle between animation frames
+                state.animationFrame =
+                    (state.animationFrame + 1) %
+                    CONFIG.UI.ANIMATION.ANIMATION_FRAMES.length;
+
+                // Get current animation frame
+                const animationIcon =
+                    CONFIG.UI.ANIMATION.ANIMATION_FRAMES[state.animationFrame];
+
+                // Update the hourglass
+                elements.processingIndicator.textContent = animationIcon;
+            }, CONFIG.UI.ANIMATION.LARGE_HOURGLASS_INTERVAL);
+        } else if (!active && state.largeHourglassInterval) {
+            // Stop the animation
+            clearInterval(state.largeHourglassInterval);
+            state.largeHourglassInterval = null;
+
+            // Hide the hourglass
+            elements.processingIndicator.classList.remove("active");
         }
     }
 
@@ -484,8 +564,9 @@ const UI = (function () {
      * @param {string} resultUrl - The URL to download the transcription from
      */
     function showDownloadButton(jobId, resultUrl) {
-        // Stop processing animation since job is complete
+        // Stop all animations since job is complete
         stopProcessingAnimation();
+        toggleLargeHourglass(false);
 
         // Store in state for reference
         state.transcriptionComplete = true;
@@ -537,8 +618,9 @@ const UI = (function () {
      * @param {string} errorMessage - The error message to display
      */
     function showTranscriptionError(errorMessage) {
-        // Stop any running animation
+        // Stop all animations
         stopProcessingAnimation();
+        toggleLargeHourglass(false);
 
         // Update state
         state.transcriptionComplete = false;
@@ -646,6 +728,7 @@ const UI = (function () {
     function resetTranscribing() {
         state.transcribing = false;
         stopProcessingAnimation();
+        toggleLargeHourglass(false);
         updateTranscriptionUI();
     }
 
@@ -661,6 +744,7 @@ const UI = (function () {
         removeTranscriptionArea: removeTranscriptionArea,
         resetTranscribing: resetTranscribing,
         updateTranscriptionUI: updateTranscriptionUI,
+        toggleLargeHourglass: toggleLargeHourglass,
     };
 })();
 

@@ -169,7 +169,7 @@ The application communicates with the WhisperX API using the following endpoints
 - **Job Persistence**: Automatically saves job IDs and status to localStorage, allowing users to close the browser during long transcriptions and resume when they return
 - **Session Recovery**: Detects and resumes in-progress transcription jobs when the application starts
 - **Seamless Experience**: Provides continuous feedback during the transcription process, even across browser sessions
-- **Visual Processing Indicators**: Animated hourglass icon (⏳/⌛) shows when transcription is actively processing
+- **Enhanced Visual Indicators**: Large animated hourglass (⏳/⌛) next to the transcription heading and animated ellipsis (...) for status messages clearly show when a job is processing
 
 ## Key Features
 
@@ -198,8 +198,8 @@ The architecture supports several paths for future enhancement:
    - Advanced progress visualization
    - User accounts and history
    - Enhanced job management dashboard for multiple transcriptions
-   - Additional visual status indicators and animations
-   - Enhanced job management dashboard for multiple transcriptions
+   - Progress bars and more sophisticated visual feedback
+   - Real-time transcription preview
 
 ## Technical Decisions and Rationales
 

@@ -65,6 +65,8 @@ const CONFIG = {
             PROCESSING_ICON: "⏳", // Hourglass icon for processing state
             ANIMATION_INTERVAL: 800, // Animation update interval in milliseconds
             ANIMATION_FRAMES: ["⏳", "⌛"], // Animation frames alternating hourglass states
+            LARGE_HOURGLASS_INTERVAL: 1200, // Animation interval for the large hourglass (slower)
+            DOTS_ANIMATION: true, // Enable animated dots in status messages
         },
     },
 };
