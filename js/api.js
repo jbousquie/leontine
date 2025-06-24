@@ -147,6 +147,7 @@ const API = (function () {
             .catch((error) => {
                 // Handle errors
                 currentJob.status = CONFIG.STATUS.UI_ERROR;
+                currentJob.lastUpdated = new Date();
                 ui.updateMessage(`Error submitting file: ${error.message}`);
                 // Re-enable the transcribe button on error
                 if (ui.resetTranscribing) {
@@ -168,6 +169,9 @@ const API = (function () {
         currentJob.statusCheckInterval = setInterval(() => {
             checkJobStatus(apiUrl, jobId);
         }, CONFIG.INTERVALS.STATUS_CHECK_INTERVAL);
+
+        // Set job state
+        currentJob.status = CONFIG.STATUS.JOB_QUEUED;
 
         // Do an immediate check
         checkJobStatus(apiUrl, jobId);
@@ -663,10 +667,10 @@ const API = (function () {
                 // Update UI to show download is complete and remove transcription area
                 ui.updateMessage(`Transcription downloaded as ${filename}`);
 
-                // Remove the download section after a short delay
+                // Reset the entire UI after a short delay
                 setTimeout(() => {
                     ui.removeTranscriptionArea();
-                }, 2000);
+                }, CONFIG.INTERVALS.RESET_DELAY);
             })
             .catch((error) => {
                 ui.updateMessage(

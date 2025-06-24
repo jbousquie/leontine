@@ -222,8 +222,7 @@ const UI = (function () {
             }
         } else {
             elements.transcribeButton.style.display = "none";
-            elements.messageDisplay.textContent =
-                "Select a file to start transcription";
+            elements.messageDisplay.textContent = CONFIG.UI.INITIAL_MESSAGE;
         }
     }
 
@@ -437,15 +436,28 @@ const UI = (function () {
     }
 
     /**
-     * Removes the transcription area (download section) from the UI
+     * Resets the entire UI to initial state
      * Called after successful download to clean up the UI
      */
     function removeTranscriptionArea() {
-        // Reset state
+        // Reset all state variables
         state.transcriptionComplete = false;
         state.currentJobId = null;
         state.resultUrl = null;
-        state.transcribing = false; // Re-enable the transcribe button
+        state.transcribing = false;
+        state.fileSelected = false;
+        state.currentFileName = null;
+        state.status = CONFIG.STATUS.UI_RESET;
+
+        // Reset the file input value
+        if (elements.fileInput) {
+            elements.fileInput.value = "";
+        }
+
+        // Reset the selected file display
+        if (elements.selectedFileDisplay) {
+            elements.selectedFileDisplay.textContent = "No file selected";
+        }
 
         // Find and animate the download section before removing
         const downloadSection = document.getElementById("download-section");
@@ -457,19 +469,17 @@ const UI = (function () {
             setTimeout(() => {
                 downloadSection.remove();
 
-                // Update message to indicate cleanup
-                updateMessage(
-                    "Transcription downloaded and saved. Ready for new file.",
-                );
-                // Update UI to show transcribe button again
+                // Update message to return to initial state
+                updateMessage(CONFIG.UI.INITIAL_MESSAGE);
+
+                // Update UI to reset transcribe button visibility
                 updateTranscriptionUI();
             }, 500); // Match animation duration from CSS
         } else {
             // Update message immediately if section doesn't exist
-            updateMessage(
-                "Transcription downloaded and saved. Ready for new file.",
-            );
-            // Update UI to show transcribe button again
+            updateMessage(CONFIG.UI.INITIAL_MESSAGE);
+
+            // Update UI to reset transcribe button visibility
             updateTranscriptionUI();
         }
     }
