@@ -480,7 +480,7 @@ const API = (function () {
         updateApiStatusUI(CONFIG.STATUS.API_CHECKING);
 
         // Make a request to the API status endpoint
-        return fetch(`${url}${CONFIG.API_ENDPOINTS.API_STATUS}`, {
+        return fetch(`${url}${CONFIG.API_ENDPOINTS.TEST}`, {
             method: "GET",
             headers: {
                 Accept: "application/json",

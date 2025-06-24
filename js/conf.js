@@ -6,7 +6,8 @@
 const CONFIG = {
     // API URLs and endpoints
     API_ENDPOINTS: {
-        TEST: "/transcription/00", // Endpoint for API availability test
+        TEST: "/status", // Endpoint for API availability test
+        API_STATUS: "/status", // Endpoint for checking API availability
         SUBMIT: "/transcription", // Endpoint to submit a new transcription job
         STATUS: "/transcription/{job_id}", // Endpoint to check status (replace {job_id})
         RESULT: "/transcription/{job_id}/result", // Endpoint to get results (replace {job_id})
