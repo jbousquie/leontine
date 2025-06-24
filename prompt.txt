@@ -138,7 +138,7 @@ leontine/
     └── icon-512.png   # 512×512 app icon
 ```
 
-## API Communication
+### API Communication
 
 The application communicates with the WhisperX API using the following endpoints:
 
@@ -169,6 +169,13 @@ The application communicates with the WhisperX API using the following endpoints
 - **Job Persistence**: Automatically saves job IDs and status to localStorage, allowing users to close the browser during long transcriptions and resume when they return
 - **Session Recovery**: Detects and resumes in-progress transcription jobs when the application starts
 - **Seamless Experience**: Provides continuous feedback during the transcription process, even across browser sessions
+- **Visual Processing Indicators**: Animated hourglass icon (⏳/⌛) shows when transcription is actively processing
+
+## Key Features
+
+- **Job Persistence**: Automatically saves job IDs and status to localStorage, allowing users to close the browser during long transcriptions and resume when they return
+- **Session Recovery**: Detects and resumes in-progress transcription jobs when the application starts
+- **Seamless Experience**: Provides continuous feedback during the transcription process, even across browser sessions
 
 ## Enhancement Potential
 
@@ -190,6 +197,8 @@ The architecture supports several paths for future enhancement:
    - Dark mode support
    - Advanced progress visualization
    - User accounts and history
+   - Enhanced job management dashboard for multiple transcriptions
+   - Additional visual status indicators and animations
    - Enhanced job management dashboard for multiple transcriptions
 
 ## Technical Decisions and Rationales

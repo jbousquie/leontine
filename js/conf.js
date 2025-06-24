@@ -61,6 +61,11 @@ const CONFIG = {
         ERROR_COLOR: "#d32f2f",
         SUCCESS_COLOR: "#4CAF50",
         INITIAL_MESSAGE: "Select a file to start transcription",
+        ANIMATION: {
+            PROCESSING_ICON: "⏳", // Hourglass icon for processing state
+            ANIMATION_INTERVAL: 800, // Animation update interval in milliseconds
+            ANIMATION_FRAMES: ["⏳", "⌛"], // Animation frames alternating hourglass states
+        },
     },
 };
 

@@ -17,6 +17,10 @@ const UI = (function () {
         currentJobId: null,
         resultUrl: null,
         transcribing: false, // Indicates if transcription is in progress
+        animationInterval: null, // Interval ID for processing animation
+        animationFrame: 0, // Current frame in the animation sequence
+        originalMessage: "", // Original message without animation
+        messageIsHtml: false, // Whether the original message is HTML
     };
 
     // Reference to external modules
@@ -49,9 +53,17 @@ const UI = (function () {
             const jobFilename =
                 localStorage.getItem(CONFIG.STORAGE_KEYS.JOB_FILENAME) ||
                 "Unknown file";
-            updateMessage(
-                `Found pending transcription job for "${jobFilename}"\nResuming job processing...`,
-            );
+
+            // Add animation to the message to indicate job is in progress
+            const message = `Found pending transcription job for "${jobFilename}"\nResuming job processing...`;
+
+            // Start processing animation immediately for better user feedback
+            setTimeout(() => {
+                startProcessingAnimation(message);
+            }, 100);
+
+            // Update message with animation
+            updateMessage(message);
 
             // Show the transcription UI section
             if (elements.transcribeButton) {
@@ -291,17 +303,111 @@ const UI = (function () {
             }
         }
 
-        if (isHtml) {
-            elements.messageDisplay.innerHTML = messageText;
+        // Start or stop animation based on job status
+        const jobId = localStorage.getItem(CONFIG.STORAGE_KEYS.CURRENT_JOB_ID);
+        const jobStatus = localStorage.getItem(CONFIG.STORAGE_KEYS.JOB_STATUS);
+
+        if (
+            jobId &&
+            jobStatus !== CONFIG.STATUS.JOB_COMPLETED &&
+            jobStatus !== CONFIG.STATUS.JOB_FAILED
+        ) {
+            // We have a pending job, start animation if not already running
+            startProcessingAnimation(messageText, isHtml);
+        } else if (
+            messageText.includes("Preparing to send") ||
+            messageText.includes("Sending") ||
+            messageText.includes("Queued") ||
+            messageText.includes("Processing") ||
+            messageText.includes("Resuming")
+        ) {
+            // Message indicates active processing, start animation
+            startProcessingAnimation(messageText, isHtml);
         } else {
-            // Format plain text with line breaks
-            const formattedText = messageText.replace(/\n/g, "<br>");
-            elements.messageDisplay.innerHTML = formattedText;
+            // No active processing, stop animation and display normal message
+            stopProcessingAnimation();
+
+            if (isHtml) {
+                elements.messageDisplay.innerHTML = messageText;
+            } else {
+                // Format plain text with line breaks
+                const formattedText = messageText.replace(/\n/g, "<br>");
+                elements.messageDisplay.innerHTML = formattedText;
+            }
         }
 
         // Ensure the message display is scrolled to the bottom
         elements.messageDisplay.scrollTop =
             elements.messageDisplay.scrollHeight;
+    }
+
+    /**
+     * Starts the processing animation in the message display
+     * @param {string} baseMessage - The base message to display with animation
+     * @param {boolean} [isHtml=false] - Whether the message contains HTML
+     */
+    function startProcessingAnimation(baseMessage, isHtml = false) {
+        // Stop any existing animation first
+        stopProcessingAnimation();
+
+        // Store the original message without animation
+        state.originalMessage = baseMessage;
+        state.messageIsHtml = isHtml;
+
+        // Initialize animation frame if not already set
+        if (state.animationFrame === undefined) {
+            state.animationFrame = 0;
+        }
+
+        // Start the animation interval
+        state.animationInterval = setInterval(() => {
+            // Toggle between animation frames
+            state.animationFrame =
+                (state.animationFrame + 1) %
+                CONFIG.UI.ANIMATION.ANIMATION_FRAMES.length;
+
+            // Get current animation frame
+            const animationIcon =
+                CONFIG.UI.ANIMATION.ANIMATION_FRAMES[state.animationFrame];
+
+            // Format the message with animation frame
+            let displayMessage = `${animationIcon} ${state.originalMessage}`;
+
+            // Update the message display
+            if (state.messageIsHtml) {
+                elements.messageDisplay.innerHTML = displayMessage;
+            } else {
+                const formattedText = displayMessage.replace(/\n/g, "<br>");
+                elements.messageDisplay.innerHTML = formattedText;
+            }
+
+            // Ensure the message display is scrolled to the bottom
+            elements.messageDisplay.scrollTop =
+                elements.messageDisplay.scrollHeight;
+        }, CONFIG.UI.ANIMATION.ANIMATION_INTERVAL);
+    }
+
+    /**
+     * Stops the processing animation
+     */
+    function stopProcessingAnimation() {
+        if (state.animationInterval) {
+            clearInterval(state.animationInterval);
+            state.animationInterval = null;
+        }
+
+        // If there was an original message, restore it without the animation
+        if (state.originalMessage) {
+            if (state.messageIsHtml) {
+                elements.messageDisplay.innerHTML = state.originalMessage;
+            } else {
+                const formattedText = state.originalMessage.replace(
+                    /\n/g,
+                    "<br>",
+                );
+                elements.messageDisplay.innerHTML = formattedText;
+            }
+        }
     }
 
     /**
@@ -378,7 +484,10 @@ const UI = (function () {
      * @param {string} resultUrl - The URL to download the transcription from
      */
     function showDownloadButton(jobId, resultUrl) {
-        // Update state
+        // Stop processing animation since job is complete
+        stopProcessingAnimation();
+
+        // Store in state for reference
         state.transcriptionComplete = true;
         state.currentJobId = jobId;
         state.resultUrl = resultUrl;
@@ -428,6 +537,9 @@ const UI = (function () {
      * @param {string} errorMessage - The error message to display
      */
     function showTranscriptionError(errorMessage) {
+        // Stop any running animation
+        stopProcessingAnimation();
+
         // Update state
         state.transcriptionComplete = false;
         state.currentJobId = null;
@@ -533,6 +645,7 @@ const UI = (function () {
      */
     function resetTranscribing() {
         state.transcribing = false;
+        stopProcessingAnimation();
         updateTranscriptionUI();
     }
 
