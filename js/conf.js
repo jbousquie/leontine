@@ -24,6 +24,10 @@ const CONFIG = {
     // LocalStorage keys
     STORAGE_KEYS: {
         API_URL: "leontine_api_url",
+        CURRENT_JOB_ID: "leontine_current_job_id",
+        JOB_FILENAME: "leontine_job_filename",
+        JOB_STATUS: "leontine_job_status",
+        JOB_TIMESTAMP: "leontine_job_timestamp",
     },
 
     // Status constants

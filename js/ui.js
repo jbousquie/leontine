@@ -41,6 +41,23 @@ const UI = (function () {
 
         // Update initial UI state
         updateTranscriptionUI();
+
+        // Check for pending job (display will be handled when API initializes)
+        const jobId = localStorage.getItem(CONFIG.STORAGE_KEYS.CURRENT_JOB_ID);
+        if (jobId) {
+            // Update UI to show there's a pending job
+            const jobFilename =
+                localStorage.getItem(CONFIG.STORAGE_KEYS.JOB_FILENAME) ||
+                "Unknown file";
+            updateMessage(
+                `Found pending transcription job for "${jobFilename}"\nResuming job processing...`,
+            );
+
+            // Show the transcription UI section
+            if (elements.transcribeButton) {
+                elements.transcribeButton.style.display = "none";
+            }
+        }
     }
 
     /**
@@ -212,6 +229,19 @@ const UI = (function () {
      * Updates the transcription UI based on current state
      */
     function updateTranscriptionUI() {
+        // Check if there's a pending job from localStorage
+        const pendingJobId = localStorage.getItem(
+            CONFIG.STORAGE_KEYS.CURRENT_JOB_ID,
+        );
+
+        if (pendingJobId) {
+            // We have a pending job, hide the transcribe button
+            elements.transcribeButton.style.display = "none";
+
+            // Don't update message here - it will be handled by API.checkForPendingJobs
+            return;
+        }
+
         if (state.fileSelected) {
             if (state.transcribing) {
                 elements.transcribeButton.style.display = "none";
@@ -510,13 +540,14 @@ const UI = (function () {
     return {
         init: init,
         updateMessage: updateMessage,
-        getSelectedFile: getSelectedFile,
         getApiUrl: getApiUrl,
+        getSelectedFile: getSelectedFile,
         updateApiStatus: updateApiStatus,
         showDownloadButton: showDownloadButton,
         showTranscriptionError: showTranscriptionError,
         removeTranscriptionArea: removeTranscriptionArea,
         resetTranscribing: resetTranscribing,
+        updateTranscriptionUI: updateTranscriptionUI,
     };
 })();
 

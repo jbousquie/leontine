@@ -98,12 +98,15 @@ Modules reference each other through dependency injection at initialization:
 
 1. **LocalStorage Persistence**
    - Stores API URL between sessions
+   - Persists transcription job information across browser restarts or page reloads
+   - Allows resume of in-progress transcriptions even after closing the browser
    - Implements simple get/set pattern for managing stored values
 
 2. **Application State**
-   - Maintains job state in API module
+   - Maintains job state in API module with persistence across sessions
    - Tracks UI state separately in UI module
    - Implements unidirectional data flow for state updates
+   - Automatically resumes pending transcription jobs on application startup
 
 ### Security Considerations
 
@@ -161,6 +164,12 @@ The application communicates with the WhisperX API using the following endpoints
    - Cancels in-progress transcription job
    - Returns success/failure status
 
+## Key Features
+
+- **Job Persistence**: Automatically saves job IDs and status to localStorage, allowing users to close the browser during long transcriptions and resume when they return
+- **Session Recovery**: Detects and resumes in-progress transcription jobs when the application starts
+- **Seamless Experience**: Provides continuous feedback during the transcription process, even across browser sessions
+
 ## Enhancement Potential
 
 The architecture supports several paths for future enhancement:
@@ -175,11 +184,13 @@ The architecture supports several paths for future enhancement:
    - Batch processing of multiple files
    - Enhanced file naming options
    - Transcription editing before saving
+   - History of completed transcriptions
 
 3. **UI Enhancements**
    - Dark mode support
    - Advanced progress visualization
    - User accounts and history
+   - Enhanced job management dashboard for multiple transcriptions
 
 ## Technical Decisions and Rationales
 

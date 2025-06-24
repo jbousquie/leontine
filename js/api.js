@@ -14,6 +14,7 @@ const API = (function () {
         status: null, // 'idle', 'sending', 'queued', 'processing', 'completed', 'error'
         statusCheckInterval: null, // Interval ID for status checking
         lastUpdated: null, // Timestamp of last status update
+        filename: null, // Original filename for display
     };
 
     // API status
@@ -40,10 +41,97 @@ const API = (function () {
         const apiUrl = ui.getApiUrl();
         if (apiUrl) {
             // Initial check
-            checkApiAvailability(apiUrl);
+            checkApiAvailability(apiUrl).then((isAvailable) => {
+                if (isAvailable) {
+                    // Check for pending jobs
+                    checkForPendingJobs(apiUrl);
+                }
+            });
 
             // Start periodic checking
             startPeriodicApiCheck(apiUrl);
+        }
+    }
+
+    /**
+     * Saves current job information to localStorage
+     * Allows job tracking across page reloads
+     */
+    function saveJobToStorage() {
+        if (currentJob.jobId) {
+            localStorage.setItem(
+                CONFIG.STORAGE_KEYS.CURRENT_JOB_ID,
+                currentJob.jobId,
+            );
+            localStorage.setItem(
+                CONFIG.STORAGE_KEYS.JOB_STATUS,
+                currentJob.status || "",
+            );
+            localStorage.setItem(
+                CONFIG.STORAGE_KEYS.JOB_TIMESTAMP,
+                currentJob.lastUpdated
+                    ? currentJob.lastUpdated.toISOString()
+                    : "",
+            );
+
+            if (currentJob.file && currentJob.file.name) {
+                localStorage.setItem(
+                    CONFIG.STORAGE_KEYS.JOB_FILENAME,
+                    currentJob.file.name,
+                );
+                currentJob.filename = currentJob.file.name;
+            }
+        }
+    }
+
+    /**
+     * Clears job information from localStorage
+     */
+    function clearJobFromStorage() {
+        localStorage.removeItem(CONFIG.STORAGE_KEYS.CURRENT_JOB_ID);
+        localStorage.removeItem(CONFIG.STORAGE_KEYS.JOB_STATUS);
+        localStorage.removeItem(CONFIG.STORAGE_KEYS.JOB_TIMESTAMP);
+        localStorage.removeItem(CONFIG.STORAGE_KEYS.JOB_FILENAME);
+    }
+
+    /**
+     * Checks for pending transcription jobs when the application loads
+     * @param {string} apiUrl - The API URL to use for checking job status
+     */
+    function checkForPendingJobs(apiUrl) {
+        const jobId = localStorage.getItem(CONFIG.STORAGE_KEYS.CURRENT_JOB_ID);
+        const jobStatus = localStorage.getItem(CONFIG.STORAGE_KEYS.JOB_STATUS);
+        const jobTimestamp = localStorage.getItem(
+            CONFIG.STORAGE_KEYS.JOB_TIMESTAMP,
+        );
+        const filename = localStorage.getItem(CONFIG.STORAGE_KEYS.JOB_FILENAME);
+
+        if (
+            jobId &&
+            jobStatus !== CONFIG.STATUS.JOB_COMPLETED &&
+            jobStatus !== CONFIG.STATUS.JOB_FAILED
+        ) {
+            // Restore the current job state
+            currentJob = {
+                jobId: jobId,
+                file: null, // We can't restore the actual file object
+                filename: filename,
+                status: jobStatus,
+                statusCheckInterval: null,
+                lastUpdated: jobTimestamp ? new Date(jobTimestamp) : new Date(),
+            };
+
+            // Notify user
+            ui.updateMessage(
+                `Resuming previous transcription job:\n` +
+                    `Job ID: ${jobId}\n` +
+                    `File: ${filename || "Unknown"}\n` +
+                    `Status: ${jobStatus || "Unknown"}\n` +
+                    `Last updated: ${formatTime(currentJob.lastUpdated)}`,
+            );
+
+            // Start checking the status again
+            startStatusChecking(apiUrl, jobId);
         }
     }
 
@@ -72,10 +160,14 @@ const API = (function () {
         currentJob = {
             jobId: null,
             file: file,
+            filename: file.name,
             status: "sending",
             statusCheckInterval: null,
             lastUpdated: null,
         };
+
+        // Clear any previous job from storage
+        clearJobFromStorage();
 
         // Send file to the API
         sendTranscriptionRequest(apiUrl, file);
@@ -128,6 +220,9 @@ const API = (function () {
                     currentJob.jobId = data.job_id;
                     currentJob.status = CONFIG.STATUS.JOB_QUEUED;
                     currentJob.lastUpdated = new Date();
+
+                    // Save job information to localStorage
+                    saveJobToStorage();
 
                     // Update UI with success message
                     ui.updateMessage(
@@ -286,6 +381,9 @@ const API = (function () {
                 currentJob.status = processedData.status;
                 currentJob.lastUpdated = new Date();
 
+                // Save updated job status to localStorage
+                saveJobToStorage();
+
                 // Construct status message
                 let statusMessage =
                     `Job ID: ${jobId}\n` +
@@ -332,6 +430,9 @@ const API = (function () {
 
                         // Show the download button
                         ui.showDownloadButton(jobId, resultUrl);
+
+                        // Clear job data from storage since it's completed
+                        clearJobFromStorage();
                     } else if (
                         processedData.status === CONFIG.STATUS.JOB_FAILED
                     ) {
@@ -351,6 +452,9 @@ const API = (function () {
 
                         // Show error status in UI
                         ui.showTranscriptionError(failureMessage);
+
+                        // Clear job data from storage since it failed
+                        clearJobFromStorage();
                     }
                 }
             })
@@ -694,6 +798,9 @@ const API = (function () {
         startPeriodicApiCheck: startPeriodicApiCheck,
         stopPeriodicApiCheck: stopPeriodicApiCheck,
         downloadTranscription: downloadTranscription,
+        saveJobToStorage: saveJobToStorage,
+        clearJobFromStorage: clearJobFromStorage,
+        checkForPendingJobs: checkForPendingJobs,
     };
 })();
 

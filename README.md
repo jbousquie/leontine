@@ -11,7 +11,8 @@ A modern, responsive client application for audio transcription using the Whispe
 - Display real-time transcription status with queue position and progress indicators
 - Enable easy access to transcription results with copying and downloading options
 - Support various output formats (text, subtitles, JSON)
-- Store user preferences for seamless experience across sessions
+- **Store user preferences for seamless experience across sessions**
+- **Persist transcription jobs across browser sessions**
 - Handle network connectivity issues gracefully with retry mechanisms
 - Implement proper error handling and user feedback
 
@@ -25,6 +26,7 @@ A modern, responsive client application for audio transcription using the Whispe
 - **Responsive Design**: Works on desktop, tablet, and mobile devices
 - **Offline Capabilities**: PWA support for installation and basic offline functionality
 - **Persistent Settings**: Save user preferences between sessions
+- **Job Persistence**: Resume transcription jobs after browser restart or page reload
 - **Clear Notifications**: Contextual feedback for user actions
 
 ## Installation
@@ -42,6 +44,7 @@ A modern, responsive client application for audio transcription using the Whispe
 4. Configure transcription options (language, model, etc.)
 5. Click "Transcribe Audio" and monitor the progress
 6. When complete, download your transcription as a text file
+7. If you close the browser during transcription, the job will automatically resume when you return to the application
 
 ## Development
 
