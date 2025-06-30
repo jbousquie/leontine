@@ -309,7 +309,7 @@ const API = (function () {
                 } else if (response.status >= 500) {
                     // Server error, but continue polling
                     throw new Error(
-                        `Server temporarily unavailable (${response.status}). Will retry in ${CONFIG.STATUS_CHECK_INTERVAL / 1000} seconds.`,
+                        `Server temporarily unavailable (${response.status}). Will retry in ${CONFIG.INTERVALS.STATUS_CHECK_INTERVAL / 1000} seconds.`,
                     );
                 } else if (!response.ok) {
                     // Other errors - stop polling
