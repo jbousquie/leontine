@@ -289,6 +289,12 @@ const UI = (function () {
      * Calls the API module directly
      */
     function handleTranscribeClick() {
+        // Clear any previous error messages before starting a new transcription
+        const errorSection = document.getElementById("download-section");
+        if (errorSection) {
+            errorSection.remove();
+        }
+
         // Update UI to show processing state
         elements.messageDisplay.textContent =
             "Preparing to send file for transcription...";
