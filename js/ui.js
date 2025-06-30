@@ -218,7 +218,8 @@ const UI = (function () {
         elements.fileInput.click();
     }
 
-    """     * Handles the file selection from the file input
+    /**
+     * Handles the file selection from the file input
      */
     function handleFileSelect(event) {
         const file = event.target.files[0];
@@ -250,7 +251,7 @@ const UI = (function () {
             // Update the transcription UI
             updateTranscriptionUI();
         }
-    }""
+    }
 
     /**
      * Updates the transcription UI based on current state
@@ -740,21 +741,19 @@ const UI = (function () {
         updateTranscriptionUI();
     }
 
-    // Public methods
+    // Public API
     return {
-        init: init,
-        updateMessage: updateMessage,
-        getApiUrl: getApiUrl,
-        getSelectedFile: getSelectedFile,
-        updateApiStatus: updateApiStatus,
-        showDownloadButton: showDownloadButton,
-        showTranscriptionError: showTranscriptionError,
-        removeTranscriptionArea: removeTranscriptionArea,
-        resetTranscribing: resetTranscribing,
-        updateTranscriptionUI: updateTranscriptionUI,
-        toggleLargeHourglass: toggleLargeHourglass,
+        init,
+        updateMessage,
+        updateApiStatus,
+        getSelectedFile,
+        getApiUrl,
+        showDownloadButton,
+        showTranscriptionError,
+        removeTranscriptionArea,
+        resetTranscribing,
     };
 })();
 
-// Make UI available globally
+// Expose the UI module to the global scope so main.js can access it
 window.UI = UI;
