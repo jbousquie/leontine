@@ -450,11 +450,11 @@ const API = (function () {
                             statusMessage + "\n\n" + failureMessage,
                         );
 
-                        // Show error status in UI
-                        ui.showTranscriptionError(failureMessage);
-
                         // Clear job data from storage since it failed
                         clearJobFromStorage();
+
+                        // Show error status in UI
+                        ui.showTranscriptionError(failureMessage);
                     }
                 }
             })
@@ -484,6 +484,9 @@ const API = (function () {
 
                     // Stop checking status for permanent errors
                     stopStatusChecking();
+
+                    // Clear job from storage to allow new submissions
+                    clearJobFromStorage();
                 }
             });
     }

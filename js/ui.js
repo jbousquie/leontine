@@ -218,11 +218,16 @@ const UI = (function () {
         elements.fileInput.click();
     }
 
-    /**
-     * Handles the file selection from the file input
+    """     * Handles the file selection from the file input
      */
     function handleFileSelect(event) {
         const file = event.target.files[0];
+
+        // Remove any existing error or result sections to start fresh
+        const downloadSection = document.getElementById("download-section");
+        if (downloadSection) {
+            downloadSection.remove();
+        }
 
         if (file) {
             // Update state
@@ -245,7 +250,7 @@ const UI = (function () {
             // Update the transcription UI
             updateTranscriptionUI();
         }
-    }
+    }""
 
     /**
      * Updates the transcription UI based on current state
@@ -657,6 +662,9 @@ const UI = (function () {
 
         // Update UI to show transcribe button again
         updateTranscriptionUI();
+
+        // After showing the error, ensure the UI is fully reset for a new job
+        resetTranscribing();
     }
 
     /**
