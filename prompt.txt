@@ -2,223 +2,124 @@
 
 ## Project Overview
 
-Leontine is a Progressive Web Application (PWA) that provides a clean, modern client interface for the WhisperX API audio transcription service. Built with vanilla JavaScript, HTML, and CSS (without external libraries or frameworks), it follows a modular design pattern to create a maintainable, responsive interface for transcribing audio files.
+Leontine is a Progressive Web Application (PWA) that provides a clean, modern client interface for the WhisperX API audio transcription service. Built with vanilla JavaScript, HTML, and CSS, it implements an Elm-like architecture to create a predictable, maintainable, and responsive interface for transcribing audio files.
 
 ## Architecture
 
+The application is built on a unidirectional data flow model inspired by the Elm Architecture. This pattern ensures a predictable application state and simplifies debugging.
+
+### Core Principles
+
+1.  **Single Source of Truth (State)**: The entire state of the application is stored in a single JavaScript object. This object is the sole authority for what is displayed on the screen.
+2.  **State is Immutable**: The state object is never modified directly. To change the state, the application must dispatch an action.
+3.  **Changes via Pure Functions (Update)**: State transitions are handled by a single, pure function (`State.update`). This "reducer" takes the current state and an action, and returns a *new* state object, describing the application's next state.
+4.  **UI as a Function of State (View)**: The user interface is a pure representation of the current state. A single `Render.render` function is responsible for taking the state object and updating the DOM to match it.
+
+This creates a clear and predictable loop:
+`Event -> Dispatch Action -> Update State -> Render UI`
+
 ### Module Structure
 
-The application follows a modular architecture based on the Immediately Invoked Function Expression (IIFE) pattern for encapsulation. The main modules are:
+The application logic is split into focused modules, each with a single responsibility.
 
-1. **Configuration Module (`conf.js`)**
-   - Centralizes constants and configuration settings
-   - Defines API endpoints, timing intervals, storage keys, and status constants
-   - Establishes a single source of truth for application constants
+1.  **Configuration (`js/conf.js`)**
+    -   Centralizes constants: API endpoints, timing intervals, storage keys, etc.
+    -   Not part of the core application loop, but provides configuration to all modules.
 
-2. **UI Module (`ui.js`)**
-   - Manages all aspects of the user interface
-   - Handles DOM manipulation and event listeners
-   - Provides methods for displaying status updates and transcription results
-   - Maintains UI state and references to DOM elements
+2.  **UI Elements (`js/ui.js`)**
+    -   A simple utility module responsible only for caching DOM element references on startup for efficient access. It holds no state and performs no DOM manipulation itself.
 
-3. **API Module (`api.js`)**
-   - Handles all communication with the WhisperX API
-   - Manages transcription job submissions
-   - Implements job status polling and result retrieval
-   - Monitors API availability using the status endpoint
+3.  **API Library (`js/api.js`)**
+    -   A stateless library for all communication with the WhisperX API.
+    -   Exports functions that each perform a single network request (e.g., `submitTranscription`, `checkJobStatus`) and return a `Promise`.
+    -   It is completely unaware of the application's state or UI.
 
-4. **Main Module (`main.js`)**
-   - Serves as the application entry point
-   - Coordinates initialization of other modules
-   - Handles cross-module references
+4.  **State Management (`js/state.js`)**
+    -   The "brain" of the application.
+    -   Defines the shape of the `initialState`.
+    -   Contains the pure `update` function (the reducer), which is the only place state transition logic is defined.
 
-### Inter-Module Communication
+5.  **Rendering (`js/render.js`)**
+    -   The "hands" of the application.
+    -   Contains the `render` function, which is responsible for all DOM manipulation.
+    -   It takes the current state and makes the UI match it, creating, updating, or removing elements as needed.
 
-Modules reference each other through dependency injection at initialization:
-- `main.js` initializes both the UI and API modules
-- The UI and API modules are given references to each other
-- This bidirectional communication allows for clean separation of concerns while enabling modules to call methods on each other
+6.  **Orchestrator (`js/main.js`)**
+    -   The central coordinator that ties everything together.
+    -   Initializes the application and sets up event listeners.
+    -   Contains the `dispatch` function, which drives the application loop.
+    -   Manages all **side effects** (e.g., making API calls using the `Api` library, managing timers with `setInterval`, and interacting with `localStorage`).
 
-## Data Flow
+### Data Flow
 
-1. **Initialization**
-   - Configuration is loaded first (`conf.js`)
-   - Main module initializes UI and API modules with cross-references
-   - UI loads saved API URL from localStorage
-   - API checks availability of the configured endpoint
+1.  **Initialization**
+    -   On `DOMContentLoaded`, `main.js`'s `init` function is called.
+    -   It caches DOM elements via `UI.init()`.
+    -   It sets up event listeners. Each listener's callback does only one thing: `dispatch` an action.
+    -   It checks `localStorage` for a saved API URL or a pending job and dispatches actions to load them into the state.
+    -   It performs the initial render by calling `Render.render()`.
 
-2. **File Selection and Transcription**
-   - User sets API URL and selects audio file through UI
-   - UI updates its state and enables transcription button
-   - When user initiates transcription, UI delegates to API module
-   - API module formats and sends request to WhisperX API
-   - UI displays status messages during submission
+2.  **User Interaction (or Timer Event)**
+    -   An event listener is triggered (e.g., a button click).
+    -   The listener calls `dispatch({ type: 'ACTION_NAME', payload: ... })`.
 
-3. **Status Monitoring**
-   - API module begins polling for job status (based on configured interval)
-   - Status updates are passed to UI module for display
-   - Queue position is shown when available
-   - Upon completion or failure, polling stops
-
-4. **Results Handling**
-   - API module fetches complete transcription
-   - UI provides download button when transcription is complete
-   - Browser's native save dialog allows user to choose save location and filename
-   - Transcription is downloaded as a text file
-   - Transcription interface is cleared after successful download
+3.  **State Update Cycle (inside `dispatch`)**
+    -   `dispatch` receives the action.
+    -   It calls `State.update(action, currentState)` to compute the `newState`.
+    -   It calls `handleSideEffects(action, newState)`.
+        -   If the action requires a side effect (like an API call), this function will execute it. For example, it might call `Api.submitTranscription()`.
+        -   The promise returned by the API call will have its `.then()` and `.catch()` handlers set up to `dispatch` *new* actions (e.g., `JOB_SUBMIT_SUCCESS` or `JOB_SUBMIT_FAILED`).
+    -   The global `state` variable is updated to the `newState`.
+    -   `dispatch` calls `Render.render(newState, dispatch)`, which updates the DOM to reflect the new state.
 
 ## Key Technical Implementations
 
-### Progressive Web App (PWA) Features
-
-1. **Service Worker (`sw.js`)**
-   - Provides offline capabilities through caching
-   - Implements install, activate, and fetch event handlers
-   - Uses cache-first strategy for static assets
-   - Maintains version control through cache naming
-
-2. **Web App Manifest (`manifest.json`)**
-   - Enables installation on various devices
-   - Defines app name, icons, colors, and display mode
-   - Configures start URL and scope
+### State Management
+-   **Elm-like Architecture**: Provides a predictable, unidirectional data flow. All application changes follow a strict, debuggable path.
+-   **LocalStorage Persistence**: Side effects managed in `main.js` handle saving and loading the API URL and active job ID to `localStorage`, allowing for session recovery.
+-   **Centralized Side Effects**: All impure operations (timers, network requests, storage) are managed in `main.js`, keeping the state and render logic pure and testable.
 
 ### Asynchronous Processing Model
+-   **Declarative Polling**: Polling is initiated and terminated declaratively based on state transitions handled in `main.js`. For example, the polling timer starts only when the `job.status` transitions to `POLLING`.
+-   **Promise-Based API**: The `api.js` library uses the `fetch` API exclusively, returning promises that the orchestrator in `main.js` uses to dispatch subsequent success or failure actions.
 
-1. **Polling Pattern**
-   - Implements interval-based status checking for transcription jobs
-   - Gracefully handles network errors during polling
-   - Uses configurable intervals to control polling frequency
-
-2. **Promise-Based API Communication**
-   - Uses fetch API for all server communication
-   - Implements proper error handling with promise chains
-   - Provides clear feedback during network operations
-
-### State Management
-
-1. **LocalStorage Persistence**
-   - Stores API URL between sessions
-   - Persists transcription job information across browser restarts or page reloads
-   - Allows resume of in-progress transcriptions even after closing the browser
-   - Implements simple get/set pattern for managing stored values
-
-2. **Application State**
-   - Maintains job state in API module with persistence across sessions
-   - Tracks UI state separately in UI module
-   - Implements unidirectional data flow for state updates
-   - Automatically resumes pending transcription jobs on application startup
-
-### Security Considerations
-
-1. **API Authentication**
-   - Includes authentication token support
-   - Uses proper headers for API requests
-
-2. **Error Handling**
-   - Implements comprehensive error handling
-   - Provides clear user feedback for various error conditions
-   - Gracefully degrades functionality when API is unavailable
+### PWA & Styling
+-   **Service Worker (`sw.js`)**: Provides offline caching for static assets.
+-   **Web App Manifest (`manifest.json`)**: Enables PWA installation.
+-   **Style Separation**: `style.css` contains the static layout and look of the application, while `reactive.css` contains all styles related to state changes (animations, visibility classes, status indicators).
 
 ## File Structure
 
 ```
 leontine/
 ├── index.html          # Main HTML entry point
-├── style.css           # Global styles
+├── style.css           # Static structural and visual styles
+├── reactive.css        # Dynamic styles for state changes and animations
 ├── manifest.json       # PWA manifest file
-├── sw.js              # Service worker for offline functionality
-├── favicon.ico        # Site favicon
-├── js/                # JavaScript modules
-│   ├── conf.js        # Configuration constants
-│   ├── main.js        # Application entry point
-│   ├── ui.js          # User interface management
-│   └── api.js         # API communication
-└── images/            # Icons for PWA installation
-    ├── icon-192.png   # 192×192 app icon
-    └── icon-512.png   # 512×512 app icon
+├── sw.js               # Service worker for offline functionality
+├── favicon.ico         # Site favicon
+├── js/                 # JavaScript modules
+│   ├── conf.js         # Configuration constants
+│   ├── ui.js           # DOM element cacher
+│   ├── api.js          # Stateless API library
+│   ├── state.js        # State definition and update function
+│   ├── render.js       # DOM rendering logic
+│   └── main.js         # Application orchestrator and side effect handler
+└── images/             # Icons for PWA installation
+    ├── icon-192.png    # 192x192 app icon
+    └── icon-512.png    # 512x512 app icon
 ```
-
-### API Communication
-
-The application communicates with the WhisperX API using the following endpoints:
-
-1. **API Status (`/status`)**
-   - Checks API availability and retrieves queue information
-   - Returns server status, processing settings, and queue state
-
-2. **Job Submission (`/transcription`)**
-   - Submits audio files for transcription
-   - Returns job ID and status URL for tracking
-
-3. **Job Status (`/transcription/{job_id}`)**
-   - Checks status of submitted transcription job
-   - Returns current status, queue position, and other metadata
-   - Triggers download interface when job status is "Completed"
-
-4. **Job Results (`/transcription/{job_id}/result`)**
-   - Retrieves completed transcription
-   - Returns full text, detected language, and timed segments
-   - Content is downloaded directly to user's device as a text file
-
-5. **Job Cancellation (`/transcription/{job_id}/cancel`)**
-   - Cancels in-progress transcription job
-   - Returns success/failure status
-
-## Key Features
-
-- **Job Persistence**: Automatically saves job IDs and status to localStorage, allowing users to close the browser during long transcriptions and resume when they return
-- **Session Recovery**: Detects and resumes in-progress transcription jobs when the application starts
-- **Seamless Experience**: Provides continuous feedback during the transcription process, even across browser sessions
-- **Enhanced Visual Indicators**: Large animated hourglass (⏳/⌛) next to the transcription heading and animated ellipsis (...) for status messages clearly show when a job is processing
-
-## Key Features
-
-- **Job Persistence**: Automatically saves job IDs and status to localStorage, allowing users to close the browser during long transcriptions and resume when they return
-- **Session Recovery**: Detects and resumes in-progress transcription jobs when the application starts
-- **Seamless Experience**: Provides continuous feedback during the transcription process, even across browser sessions
-
-## Enhancement Potential
-
-The architecture supports several paths for future enhancement:
-
-1. **Additional Transcription Options**
-   - Language selection
-   - Speaker diarization control
-   - Model size configuration
-
-2. **Results Management**
-   - Support for different output formats (TXT, SRT, VTT, JSON)
-   - Batch processing of multiple files
-   - Enhanced file naming options
-   - Transcription editing before saving
-   - History of completed transcriptions
-
-3. **UI Enhancements**
-   - Dark mode support
-   - Advanced progress visualization
-   - User accounts and history
-   - Enhanced job management dashboard for multiple transcriptions
-   - Progress bars and more sophisticated visual feedback
-   - Real-time transcription preview
 
 ## Technical Decisions and Rationales
 
-1. **No External Dependencies**
-   - Ensures small file size and fast loading
-   - Reduces security vulnerabilities
-   - Simplifies maintenance and understanding
+1.  **Elm-like Architecture**
+    -   **Rationale**: To create a highly predictable and debuggable application. With a single state object and unidirectional data flow, it's always clear why the UI is in a certain state. It eliminates complex, hard-to-trace bugs common in event-driven code where many parts of the application can modify the state and DOM independently.
+    -   **Benefit**: Excellent maintainability and scalability. Adding new features involves extending the state shape, adding action types, and updating the relevant functions, all in a clear, structured way.
 
-2. **Module Pattern (IIFE)**
-   - Provides encapsulation without build tools
-   - Prevents global namespace pollution
-   - Allows clear public/private method separation
+2.  **No External Dependencies**
+    -   **Rationale**: Ensures a minimal footprint, fast load times, and complete control over the codebase. It avoids the overhead and potential security vulnerabilities of external libraries.
+    -   **Benefit**: Simplifies maintenance and deepens understanding of the underlying browser APIs.
 
-3. **Service Worker Implementation**
-   - Enables offline functionality
-   - Improves performance through caching
-   - Provides foundation for background processing
-
-4. **Responsive Design**
-   - CSS-based responsive layout
-   - Mobile-first approach
-   - Flexible components that adapt to viewport size
+3.  **Separation of Concerns**
+    -   **Rationale**: Each module has a single, well-defined responsibility (state logic, rendering, API calls, orchestration).
+    -   **Benefit**: This makes the code easier to understand, test, and refactor. For example, the entire UI's appearance can be changed by modifying `render.js` without touching any application logic.
