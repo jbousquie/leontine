@@ -9,6 +9,12 @@
  * - Initializing the application and setting up event listeners.
  */
 
+import { CONFIG } from "./conf.js";
+import { UI } from "./ui.js";
+import { Api } from "./api.js";
+import { State } from "./state.js";
+import { Render } from "./render.js";
+
 // --- Application State and Timers ---
 let state = State.initialState;
 let apiCheckInterval = null;
@@ -256,23 +262,9 @@ function init() {
     Render.render(state, dispatch);
 }
 
+// Start the application once the DOM is ready
 document.addEventListener("DOMContentLoaded", () => {
     console.log("Initializing Leontine application...");
-
-    // Ensure all modules are loaded before starting
-    if (
-        typeof CONFIG === "undefined" ||
-        typeof UI === "undefined" ||
-        typeof Api === "undefined" ||
-        typeof State === "undefined" ||
-        typeof Render === "undefined"
-    ) {
-        console.error(
-            "A core module is not loaded. Check script order in index.html.",
-        );
-        return;
-    }
-
     init();
     console.log("Application initialization complete.");
 });

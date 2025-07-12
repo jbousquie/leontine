@@ -3,7 +3,7 @@
  * Centralizes all constants used throughout the application
  */
 
-const CONFIG = {
+export const CONFIG = {
     // API URLs and endpoints
     API_ENDPOINTS: {
         TEST: "/status", // Endpoint for API availability test
@@ -70,6 +70,3 @@ const CONFIG = {
         },
     },
 };
-
-// Make configuration available globally
-window.CONFIG = CONFIG;
