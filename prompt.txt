@@ -123,3 +123,7 @@ leontine/
 3.  **Separation of Concerns**
     -   **Rationale**: Each module has a single, well-defined responsibility (state logic, rendering, API calls, orchestration).
     -   **Benefit**: This makes the code easier to understand, test, and refactor. For example, the entire UI's appearance can be changed by modifying `render.js` without touching any application logic.
+
+4.  **Native JavaScript Modules (ESM)**
+    -   **Rationale**: To leverage the browser's built-in module system (`import`/`export`) for handling dependencies. This avoids polluting the global `window` object and eliminates script-loading order issues.
+    -   **Benefit**: Creates a cleaner, more robust, and more maintainable codebase where dependencies are explicit and scoped to each file.
